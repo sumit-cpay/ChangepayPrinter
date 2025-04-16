@@ -76,7 +76,7 @@ class CpayPrinterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
   }
 
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "flutter_thermal_printer")
+    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "cpay_printer")
     channel.setMethodCallHandler(this)
     context = flutterPluginBinding.applicationContext
     //bind service，get imyBinder
