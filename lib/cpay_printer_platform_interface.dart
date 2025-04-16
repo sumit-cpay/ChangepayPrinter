@@ -24,6 +24,10 @@ abstract class CpayPrinterPlatform extends PlatformInterface {
     _instance = instance;
   }
 
+  Future<void> initialise() {
+    throw UnimplementedError('initialise() has not been implemented.');
+  }
+
   Future<String?> getPlatformVersion() {
     throw UnimplementedError('platformVersion() has not been implemented.');
   }

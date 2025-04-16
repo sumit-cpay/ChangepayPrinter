@@ -7,6 +7,10 @@ class CpayPrinter {
     return CpayPrinterPlatform.instance.getPlatformVersion();
   }
 
+  Future<void> initialise() {
+    return CpayPrinterPlatform.instance.initialise();
+  }
+
   Future<List<BluetoothPrinter>> get getAllBluetoothPairedDevices async {
     return CpayPrinterPlatform.instance.getAllBluetoothPairedDevices;
   }

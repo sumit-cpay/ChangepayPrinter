@@ -47,4 +47,13 @@ class MethodChannelCpayPrinter extends CpayPrinterPlatform {
     }
     return false;
   }
+
+  @override
+  Future<void> initialise() async {
+    try {
+      methodChannel.invokeMapMethod('initialise');
+    } catch (err) {
+      log(err.toString());
+    }
+  }
 }
