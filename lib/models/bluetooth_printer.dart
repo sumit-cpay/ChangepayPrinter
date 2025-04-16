@@ -2,7 +2,6 @@ import 'dart:developer';
 import 'package:cpay_printer/models/offline_order_label.dart';
 import 'package:cpay_printer/models/printable_receipt.dart';
 import 'package:flutter/services.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class BluetoothPrinter {
   final String printerAddress;
@@ -32,15 +31,11 @@ class BluetoothPrinter {
   }
 
   Future<void> connect() async {
-    const bluetoothConnectPermission = Permission.bluetoothConnect;
-    final status = await bluetoothConnectPermission.request();
-    if (status.isGranted || status.isLimited) {
-      try {
-        await _channel.invokeMethod("connectToBluetoothPrinterByAddress",
-            {"bluetooth_printer_address": printerAddress});
-      } catch (e) {
-        log(e.toString());
-      }
+    try {
+      await _channel.invokeMethod("connectToBluetoothPrinterByAddress",
+          {"bluetooth_printer_address": printerAddress});
+    } catch (e) {
+      log(e.toString());
     }
   }
 
