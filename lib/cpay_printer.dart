@@ -11,11 +11,11 @@ class CpayPrinter {
     return CpayPrinterPlatform.instance.initialise();
   }
 
-  Future<List<BluetoothPrinter>> get getAllBluetoothPairedDevices async {
-    return CpayPrinterPlatform.instance.getAllBluetoothPairedDevices;
+  Future<List<BluetoothPrinter>> getAllBluetoothPairedDevices() {
+    return CpayPrinterPlatform.instance.getAllBluetoothPairedDevices();
   }
 
-  Future<bool> connectToBluetoothPrinterByAddress(String address) async {
+  Future<bool> connectToBluetoothPrinterByAddress(String address) {
     return CpayPrinterPlatform.instance
         .connectToBluetoothPrinterByAddress(address);
   }

@@ -32,7 +32,7 @@ abstract class CpayPrinterPlatform extends PlatformInterface {
     throw UnimplementedError('platformVersion() has not been implemented.');
   }
 
-  Future<List<BluetoothPrinter>> get getAllBluetoothPairedDevices {
+  Future<List<BluetoothPrinter>> getAllBluetoothPairedDevices() {
     throw UnimplementedError('getAllBluetoothPairedDevices has not been implemented.');
   }
 

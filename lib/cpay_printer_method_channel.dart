@@ -20,7 +20,7 @@ class MethodChannelCpayPrinter extends CpayPrinterPlatform {
   }
 
   @override
-  Future<List<BluetoothPrinter>> get getAllBluetoothPairedDevices async {
+  Future<List<BluetoothPrinter>> getAllBluetoothPairedDevices() async {
     final availableDevicesMap =
         await methodChannel.invokeMethod("getAllBluetoothPairedDevices");
     final bluetoothPrinters = <BluetoothPrinter>[];
