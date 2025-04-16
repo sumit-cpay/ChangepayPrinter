@@ -11,7 +11,7 @@ class BluetoothPrinter {
     required this.printerName,
   });
   static const MethodChannel _channel =
-      MethodChannel('flutter_thermal_printer');
+      MethodChannel('cpay_printer');
 
   static const paperWidth58 = 58.0;
   static const paperWidth80 = 80.0;
