@@ -90,8 +90,6 @@ class CpayPrinterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
     if (bluetoothAdapter != null) {
       return
     }
-    logger("Asking bluetooth permissions")
-    requestBluetoothPermission()
     logger("Initialising Bluetooth manager and adapter")
     bluetoothManager = getSystemService(context, BluetoothManager::class.java)
     bluetoothAdapter = bluetoothManager?.adapter
@@ -105,33 +103,11 @@ class CpayPrinterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
   }
 
   @RequiresApi(Build.VERSION_CODES.S)
-  private fun requestBluetoothPermission() {
-    if (ActivityCompat.checkSelfPermission(
-        context,
-        android.Manifest.permission.BLUETOOTH_SCAN
-      ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
-        context,
-        android.Manifest.permission.BLUETOOTH_CONNECT
-      ) != PackageManager.PERMISSION_GRANTED
-    ) {
-      ActivityCompat.requestPermissions(
-        activity!!,
-        arrayOf<String>(
-          android.Manifest.permission.BLUETOOTH_SCAN,
-          android.Manifest.permission.BLUETOOTH_CONNECT
-        ),
-        1024
-      )
-    }
-  }
-
-  @RequiresApi(Build.VERSION_CODES.S)
   private fun getAllBluetoothPairedDevices(call: MethodCall, result: Result) {
     if (bluetoothAdapter == null || bluetoothManager == null) {
       return
     }
     if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-      requestBluetoothPermission()
       return
     }
     if (!bluetoothAdapter!!.isDiscovering) {
