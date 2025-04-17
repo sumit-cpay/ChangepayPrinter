@@ -156,6 +156,7 @@ class CpayPrinterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
   private fun connectToBluetoothPrinterByAddress(call: MethodCall, result: Result) {
     val address = call.argument<String>("bluetooth_printer_address")
     if (connectedThermalPrinter?.address == address) {
+      result.success(true)
       return;
     }
 
@@ -259,12 +260,12 @@ class CpayPrinterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
     }
     bluetoothPrintBinder?.WriteSendData(object : TaskCallback {
       override fun OnSucceed() {
-        logger("printStringWithBluetoothPrinter() successfully sent data for printing")
+        logger("printReceiptWithBluetoothPrinter() successfully sent data for printing")
         result.success(true)
       }
 
       override fun OnFailed() {
-        logger("printStringWithBluetoothPrinter() failed to send data for printing")
+        logger("printReceiptWithBluetoothPrinter() failed to send data for printing")
         result.error("Failed to print receipt", "Unknown", "Unknown")
       }
     }, ProcessData {
