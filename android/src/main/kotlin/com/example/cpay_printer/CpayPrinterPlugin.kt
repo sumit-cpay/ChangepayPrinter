@@ -260,7 +260,7 @@ class CpayPrinterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
     bluetoothPrintBinder?.WriteSendData(object : TaskCallback {
       override fun OnSucceed() {
         logger("printStringWithBluetoothPrinter() successfully sent data for printing")
-        result.error("Failed to print receipt", "Unknown", "Unknown")
+        result.success(true)
       }
 
       override fun OnFailed() {
