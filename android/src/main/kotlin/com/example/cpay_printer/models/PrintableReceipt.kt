@@ -22,6 +22,7 @@ class PrintableReceipt(
     val datetime: String,
     @SerializedName("delivery_type")
     val deliveryType: String,
+    @SerializedName("items")
     val items: List<CartItem>,
     @SerializedName("order_id")
     val orderId: String,
@@ -341,14 +342,20 @@ class PrintableReceipt(
     }
 }
 
-class CartItem(
+data class CartItem(
+    @SerializedName("name")
     val name: String,
+    @SerializedName("price")
     val price: Double,
+    @SerializedName("quantity")
     val quantity: Int,
+    @SerializedName("total")
     val total: Double
 )
 
 data class OtherCharge(
+    @SerializedName("name")
     val name: String,
+    @SerializedName("value")
     val value: Double,
 )

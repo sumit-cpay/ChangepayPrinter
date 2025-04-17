@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:developer';
 
+import 'package:cpay_printer/models/printable_receipt.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -41,7 +43,8 @@ class _MyAppState extends State<MyApp> {
               final f = await printer.getAllBluetoothPairedDevices();
               log('${f.first}');
               await f.first.connect();
-              f.first.printString('printableString\n\n\n\n');
+              final r = PrintableReceipt.fromJson(jsonDecode(json));
+              f.first.printReceipt(r);
             } catch (e) {
               debugPrint('$e');
             }
@@ -57,3 +60,51 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
+
+var json = """
+    {
+        "printer_id": "86:67:7A:00:15:A8",
+        "order_id": "b0869d",
+        "datetime": "27/06/2022 15:06PM UTC",
+        "delivery_type": "SMART_BOX_DELIVERY",
+        "items": [
+            {
+                "name": "Kalakand",
+                "quantity": 2,
+                "price": 28000,
+                "total": 56000
+            },
+            {
+                "name": "Kalakand sn jsjndn jsd sndjns dsdjmsjd",
+                "quantity": 5585,
+                "price": 2800000,
+                "total": 56000000
+            }
+        ],
+        "other_charges": [
+            {
+                "name": "PACKING",
+                "value": 400,
+                "merchant_added": false,
+                "breakup": {}
+            },
+            {
+                "name": "EXTRA",
+                "value": 1000,
+                "merchant_added": false,
+                "breakup": {}
+            },
+            {
+                "name": "TAX",
+                "value": 2870,
+                "merchant_added": false,
+                "breakup": {}
+            }
+        ],
+        "discount": 0,
+        "order_total": 60270,
+        "address": "Pretty Address, eSamudaay TESTBOX",
+        "customer_phone": "+91-7750860057",
+        "customer_name": "Sumit"
+    }
+""";
