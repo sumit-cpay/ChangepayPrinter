@@ -120,10 +120,8 @@ class CpayPrinterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
       val majorDeviceClass: Int = device.bluetoothClass.majorDeviceClass
       val deviceClass: Int = device.bluetoothClass.deviceClass
       logger("Device details Maj: $majorDeviceClass, Dev: $deviceClass")
-      if (majorDeviceClass == 1536 && (deviceClass == 1664 || deviceClass == 1536)) {
-        thermalPrinterDevices.add(device)
-        bluetoothPrintersMap.add(BluetoothPrinter(device.address, device.name).toJson())
-      }
+      thermalPrinterDevices.add(device)
+      bluetoothPrintersMap.add(BluetoothPrinter(device.address, device.name).toJson())
     }
     logger("all thermal printers found $thermalPrinterDevices")
     result.success(bluetoothPrintersMap)
