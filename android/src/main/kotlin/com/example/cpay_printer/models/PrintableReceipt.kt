@@ -132,6 +132,9 @@ class PrintableReceipt(
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
+
+        val data = byteArrayOf(27, 109)
+        list.add(data)
         return list
     }
 
