@@ -1,5 +1,6 @@
 package com.example.cpay_printer
 
+import android.Manifest
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -85,7 +86,6 @@ class CpayPrinterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
     context.bindService(intent, bluetoothServiceConnection, Context.BIND_AUTO_CREATE)
   }
 
-  @RequiresApi(Build.VERSION_CODES.S)
   private fun initialise() {
     if (bluetoothAdapter != null) {
       return
@@ -102,7 +102,6 @@ class CpayPrinterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
     }
   }
 
-  @RequiresApi(Build.VERSION_CODES.S)
   private fun getAllBluetoothPairedDevices(call: MethodCall, result: Result) {
     if (bluetoothAdapter == null || bluetoothManager == null) {
       return
@@ -339,10 +338,6 @@ class CpayPrinterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
     })
   }
 
-
-
-
-  @RequiresApi(Build.VERSION_CODES.S)
   override fun onMethodCall(call: MethodCall, result: Result) {
     when (call.method) {
       "initialise" -> initialise()
