@@ -56,11 +56,12 @@ class PrintableReceipt(
 
         list.add(businessName.encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
-        list.add(DataForSendToPrinterPos58.selectOrCancelBoldModel(1))
+
 
         list.add("Customer Ph \n${customerPhone}".encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
 
+        list.add(DataForSendToPrinterPos58.selectOrCancelBoldModel(1))
         list.add("Customer Name \n${customerName}".encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
 
