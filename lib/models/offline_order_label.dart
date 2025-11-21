@@ -16,7 +16,7 @@ class OfflineOrderLabel {
     required this.creditIssued,
     required this.issuedOn,
     required this.validTill,
-    required this.tokenId,
+    required this.tokenId ,
   });
 
   @override
