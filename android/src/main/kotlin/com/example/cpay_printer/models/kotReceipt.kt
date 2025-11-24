@@ -114,8 +114,9 @@ data class KOTPrintableReceipt(
 
         // HALF CUT OPTION
         if (halfCut) {
-            list.add(DataForSendToPrinterPos58.printAndFeedPaper(80))
-            list.add(DataForSendToPrinterPos58.selectCutPagerModerAndCutPager(66, 1))
+           list.add(DataForSendToPrinterPos58.printAndFeedLine(5))
+list.add(DataForSendToPrinterPos58.selectCutPagerModeAndCutPager(66, 1))
+
         } else {
             list.add("\n\n\n".toByteArray())
         }
@@ -133,7 +134,7 @@ data class KOTPrintableReceipt(
 // =========================
 // Combines Main + All KOTs
 // =========================
-data class PrintableReceiptV2(
+data class KotPrintableReceiptV2(
     val main: PrintableReceiptMain,
     val kotSections: Map<String, List<CartItemReceipt>>
 ) {
