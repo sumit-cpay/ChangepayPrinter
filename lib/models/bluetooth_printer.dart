@@ -3,6 +3,8 @@ import 'package:cpay_printer/models/offline_order_label.dart';
 import 'package:cpay_printer/models/printable_receipt.dart';
 import 'package:flutter/services.dart';
 
+import 'kot_receipt.dart';
+
 class BluetoothPrinter {
   final String printerAddress;
   final String printerName;
@@ -69,6 +71,30 @@ class BluetoothPrinter {
       rethrow;
     }
   }
+  
+  Future<bool> printReceiptV2(
+  KotPrintableReceiptV2 kotreceiptV2, {
+  String? qrCodeText,
+  double paperWidth = BluetoothPrinter.paperWidth58,
+  required bool kotEnabled,
+}) async {
+  try {
+    final result = await _channel.invokeMethod<bool>(
+      "printReceiptV2",
+      {
+        "printable_receipt_v2":   kotreceiptV2.toJson(),
+        "qr_code_text": qrCodeText,
+        "paper_width": paperWidth,
+        "kot_enabled": kotEnabled,
+      },
+    );
+
+    return result ?? false;
+  } catch (e) {
+    rethrow;
+  }
+}
+
 
   Future<bool> printOfflineOrderLabel({
     required OfflineOrderLabel offlineOrderLabel,
