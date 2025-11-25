@@ -1,4 +1,5 @@
 package com.example.cpay_printer
+import com.google.gson.reflect.TypeToken
 
 import android.Manifest
 import android.app.Activity
@@ -44,6 +45,11 @@ import net.posprinter.utils.BitmapToByteData
 import net.posprinter.utils.DataForSendToPrinterPos58
 import net.posprinter.utils.DataForSendToPrinterTSC
 import kotlin.math.log
+import com.example.cpay_printer.models.KotPrintableReceiptV2
+import com.example.cpay_printer.models.PrintableReceiptMain
+import com.example.cpay_printer.models.KOTPrintableReceipt
+import com.example.cpay_printer.models.CartItemReceipt
+
 
 
 /** CpayPrinterPlugin */
@@ -222,6 +228,86 @@ class CpayPrinterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
     }
   }
 
+
+
+private fun printReceiptV2WithBluetoothPrinter(call: MethodCall, result: Result) {
+    val kotReceiptMap = call.argument<Map<String, Any>>("printReceiptV2")
+    val kotEnabled = call.argument<Boolean>("kot_enabled") ?: false
+
+    if (kotReceiptMap == null) {
+        result.error("INVALID_ARGUMENT", "No receipt data provided", null)
+        return
+    }
+
+    val gson = Gson()
+
+    // Use TypeToken for proper nested deserialization
+    val type = object : com.google.gson.reflect.TypeToken<KotPrintableReceiptV2>() {}.type
+    val kotReceipt: KotPrintableReceiptV2 = gson.fromJson(gson.toJson(kotReceiptMap), type)
+
+    logger("Deserialized KOT receipt: $kotReceipt")
+    logger("KOT sections: ${kotReceipt.kotSections.keys}")
+
+    if (connectedThermalPrinter == null) {
+        result.error("NO_PRINTER", "Connect to printer before printing", null)
+        return
+    }
+
+    try {
+        bluetoothPrintBinder?.WriteSendData(object : TaskCallback {
+            override fun OnSucceed() {
+                result.success(true)
+            }
+
+            override fun OnFailed() {
+                result.error("PRINT_FAILED", "Failed to send data to printer", null)
+            }
+        }, ProcessData {
+            val list = mutableListOf<ByteArray>()
+
+            // --- 1. Main Receipt ---
+            list.addAll(kotReceipt.generateMainReceipt58())
+
+            // --- 2. KOT Sections ---
+         kotReceipt.kotSections.forEach { (category, itemsAny) ->
+    // Convert List<Map<String, Any>> -> List<CartItemReceipt>
+ val items: List<CartItemReceipt> = gson.fromJson(
+    gson.toJson(itemsAny),
+    object : TypeToken<List<CartItemReceipt>>() {}.type
+)
+
+
+    val kot = KOTPrintableReceipt(
+        orderId = kotReceipt.main.orderId,
+        datetime = kotReceipt.main.datetime,
+        businessName = kotReceipt.main.businessName,
+        customerNote = kotReceipt.main.customerNote,
+        items = items,
+        categoryName = category
+    )
+    list.addAll(kot.generateKOT58())
+    repeat(2) { list.add(DataForSendToPrinterPos58.printAndFeedLine()) }
+}
+
+
+            // --- Final feed ---
+            repeat(2) { list.add(DataForSendToPrinterPos58.printAndFeedLine()) }
+
+            list
+        })
+    } catch (e: Exception) {
+        e.printStackTrace()
+        result.error("PRINT_FAILED", e.message, null)
+    }
+}
+
+
+
+
+
+
+
+
   private fun printReceiptWithBluetoothPrinter(call: MethodCall, result: Result) {
     val printableReceiptMap = call.argument<Map<String, Any>>("printable_receipt")
     val qrCodeText = call.argument<String?>("qr_code_text")
@@ -348,6 +434,8 @@ class CpayPrinterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
       "printStringWithBluetoothPrinter" -> printStringWithBluetoothPrinter(call, result)
       "printReceiptWithBluetoothPrinter" -> printReceiptWithBluetoothPrinter(call, result)
       "printOfflineOrderLabel" -> printOfflineOrderLabel(call, result)
+      "printReceiptV2" -> printReceiptV2WithBluetoothPrinter(call, result)  // <--- ADD THIS
+
       else -> result.notImplemented()
     }
   }

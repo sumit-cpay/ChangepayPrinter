@@ -130,14 +130,26 @@ class KotPrintableReceiptV2 {
     return KotPrintableReceiptV2(main: main, kotSections: kotMap);
   }
 
-  Map<String, dynamic> toJson() {
-    final map = <String, dynamic>{};
-    map['main'] = main.toJson();
-    kotSections.forEach((key, value) {
-      map[key] = value.map((item) => item.toJson()).toList();
-    });
-    return map;
-  }
+Map<String, dynamic> toJson() {
+  final map = <String, dynamic>{};
+  map['main'] = main.toJson();
+
+  // Convert each KOT section to match Kotlin CartItemReceipt
+  kotSections.forEach((key, value) {
+    map[key] = value
+        .map((item) => {
+              "name": item.name,
+              "quantity": item.quantity,
+              "price": item.price,
+              "total": item.total,
+              "category": item.category,
+            })
+        .toList();
+  });
+
+  return map;
+}
+
 }
 
 // ==================== Extension for Paisa to Rupee Conversion ====================

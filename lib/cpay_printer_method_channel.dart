@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'cpay_printer_platform_interface.dart';
+import 'models/kot_receipt.dart';
 
 /// An implementation of [CpayPrinterPlatform] that uses method channels.
 class MethodChannelCpayPrinter extends CpayPrinterPlatform {
@@ -51,6 +52,21 @@ class MethodChannelCpayPrinter extends CpayPrinterPlatform {
       methodChannel.invokeMapMethod('initialise');
     } catch (err) {
       log(err.toString());
+    }
+  }
+}
+
+
+/// --- EXTENSION MUST BE OUTSIDE THE CLASS ---
+extension CpayPrinterPrinting on MethodChannelCpayPrinter {
+  /// Print Main + KOT receipts
+  Future<void> printKotReceiptV2(KotPrintableReceiptV2 kotData) async {
+    try {
+      final jsonData = kotData.toJson(); // Convert model to Map<String, dynamic>
+      await methodChannel.invokeMethod('printKotReceiptV2', jsonData);
+    } catch (e) {
+      log("Printing failed: $e");
+      rethrow;
     }
   }
 }

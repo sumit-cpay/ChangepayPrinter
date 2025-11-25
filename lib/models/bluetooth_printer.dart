@@ -72,17 +72,64 @@ class BluetoothPrinter {
     }
   }
   
+ 
   Future<bool> printReceiptV2(
-  KotPrintableReceiptV2 kotreceiptV2, {
+  KotPrintableReceiptV2 kotReceiptV2, {
   String? qrCodeText,
   double paperWidth = BluetoothPrinter.paperWidth58,
   required bool kotEnabled,
 }) async {
   try {
+    // --- 1. Convert main receipt ---
+    final Map<String, dynamic> mainMap = {
+      'orderId': kotReceiptV2.main.orderId,
+      'datetime': kotReceiptV2.main.datetime,
+      'businessName': kotReceiptV2.main.businessName,
+      'customerPhone': kotReceiptV2.main.customerPhone,
+      'customerName': kotReceiptV2.main.customerName,
+      'deliveryType': kotReceiptV2.main.deliveryType,
+      'address': kotReceiptV2.main.address,
+      'customerNote': kotReceiptV2.main.customerNote,
+      'items': kotReceiptV2.main.items.map((item) {
+        return {
+          'name': item.name,
+          'quantity': item.quantity,
+          'price': item.price,
+          'total': item.total,
+          'category': item.category,
+        };
+      }).toList(),
+      'otherCharges': kotReceiptV2.main.otherCharges,
+      'discount': kotReceiptV2.main.otherCharges.fold<double>(
+          0.0, (sum, e) => sum + (e['discount'] ?? 0.0)),
+      'orderTotal': kotReceiptV2.main.orderTotal,
+    };
+
+    // --- 2. Convert KOT sections ---
+    final Map<String, dynamic> kotSectionsMap = {};
+    kotReceiptV2.kotSections.forEach((key, items) {
+      kotSectionsMap[key] = items.map((item) {
+        return {
+          'name': item.name,
+          'quantity': item.quantity,
+          'price': item.price,
+          'total': item.total,
+          'category': item.category,
+        };
+      }).toList();
+    });
+
+    // --- 3. Build payload for Kotlin ---
+    final payload = {
+      'main': mainMap,
+      'kotSections': kotSectionsMap, // <-- Important: nest all KOTs under this key
+    };
+
+    // --- 4. Send to Kotlin ---
     final result = await _channel.invokeMethod<bool>(
       "printReceiptV2",
       {
-        "printable_receipt_v2":   kotreceiptV2.toJson(),
+        "printReceiptV2": payload,
         "qr_code_text": qrCodeText,
         "paper_width": paperWidth,
         "kot_enabled": kotEnabled,
@@ -90,7 +137,8 @@ class BluetoothPrinter {
     );
 
     return result ?? false;
-  } catch (e) {
+  } catch (e, st) {
+    print("Error in printReceiptV2: $e\n$st");
     rethrow;
   }
 }
