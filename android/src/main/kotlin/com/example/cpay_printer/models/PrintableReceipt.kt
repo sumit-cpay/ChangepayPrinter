@@ -50,23 +50,30 @@ class PrintableReceipt(
         list.add(orderId.encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
 
-        list.add(DataForSendToPrinterPos58.selectCharacterSize(16))
+list.add(byteArrayOf(0x1B, 0x21, 0x00))
         list.add(datetime.encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
+list.add(DataForSendToPrinterPos58.selectCharacterSize(1))
 
+list.add(byteArrayOf(0x1B, 0x21, 0x00))
         list.add(businessName.encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
+list.add(DataForSendToPrinterPos58.selectCharacterSize(1))
 
 
-        list.add("Customer Ph \n${customerPhone}".encodeToByteArray())
+
+        list.add("Ph:${customerPhone}".encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
 
         list.add(DataForSendToPrinterPos58.selectOrCancelBoldModel(1))
-        list.add("Customer Name \n${customerName}".encodeToByteArray())
+        list.add("Name:${customerName}".encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
 
         list.add(DataForSendToPrinterPos58.initializePrinter())
         list.add(DataForSendToPrinterPos58.selectCharacterSize(1))
+
+        list.add("--------------------------------".encodeToByteArray())
+
 
         if (qrCodeText != null) {
             list.add(DataForSendToPrinterPos58.initializePrinter())
@@ -81,8 +88,8 @@ class PrintableReceipt(
 
         list.add("--------------------------------".encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
-        list.add("Items       Qty   Price  Total  ".encodeToByteArray())
-        list.add("--------------------------------".encodeToByteArray())
+        list.add("Items      Qty    Price   Total  ".encodeToByteArray())
+        list.add("-------------------------------".encodeToByteArray())
 
         list.add(DataForSendToPrinterPos58.initializePrinter())
 
@@ -138,93 +145,155 @@ class PrintableReceipt(
         return list
     }
 
-    public fun generatePrintableByteArrayForPaperWidth80(qrCodeText: String? = null): MutableList<ByteArray> {
-        val list: MutableList<ByteArray> = java.util.ArrayList()
+public fun generatePrintableByteArrayForPaperWidth80(qrCodeText: String? = null): MutableList<ByteArray> {
+    val list: MutableList<ByteArray> = java.util.ArrayList()
+    
+    // Header
+    list.add(DataForSendToPrinterPos80.initializePrinter())
+    list.add(DataForSendToPrinterPos80.selectAlignment(1))
+    list.add(DataForSendToPrinterPos80.selectCharacterSize(18))
+    list.add(orderId.encodeToByteArray())
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+
+    list.add(DataForSendToPrinterPos80.selectCharacterSize(1))
+    list.add(datetime.encodeToByteArray())
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(1))
+    list.add(businessName.encodeToByteArray())
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+
+    list.add("Ph:${customerPhone}\n".encodeToByteArray())
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+
+    list.add(DataForSendToPrinterPos80.selectOrCancelBoldModel(1))
+    list.add("Name:${customerName}\n".encodeToByteArray())
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+
+    list.add(DataForSendToPrinterPos80.initializePrinter())
+    list.add(DataForSendToPrinterPos80.selectCharacterSize(1))
+    list.add("--------------------------------".encodeToByteArray())
+
+    // QR Code
+    if (qrCodeText != null) {
         list.add(DataForSendToPrinterPos80.initializePrinter())
         list.add(DataForSendToPrinterPos80.selectAlignment(1))
-        list.add(DataForSendToPrinterPos80.selectCharacterSize(18))
-        list.add(orderId.encodeToByteArray())
+        list.add(qrCodeDataToByteArray(qrCodeText, 250)!!)
         list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    }
 
-        list.add(DataForSendToPrinterPos80.selectCharacterSize(16))
-        list.add(datetime.encodeToByteArray())
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    list.add("------------------------------------------------".encodeToByteArray())
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
 
-        list.add(businessName.encodeToByteArray())
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    // -----------------------------
+    // Items Table Header
+    // -----------------------------
+    val ITEM_NAME_WIDTH = 24
+    val QTY_WIDTH = 4
+    val PRICE_WIDTH = 8
+    val TOTAL_WIDTH = 8
 
-        list.add("Customer Ph \n${customerPhone}".encodeToByteArray())
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    val headerLine = "Items".padEnd(ITEM_NAME_WIDTH, ' ') +
+            "Qty".padStart(QTY_WIDTH, ' ') +
+            "Price".padStart(PRICE_WIDTH, ' ') +
+            "Total".padStart(TOTAL_WIDTH, ' ') + "\n"
+    list.add(headerLine.encodeToByteArray())
+    list.add("------------------------------------------------".encodeToByteArray())
 
-        list.add(DataForSendToPrinterPos80.selectOrCancelBoldModel(1))
-        list.add("Customer Name \n${customerName}".encodeToByteArray())
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
-
-        list.add(DataForSendToPrinterPos80.initializePrinter())
-        list.add(DataForSendToPrinterPos80.selectCharacterSize(1))
-
-        if (qrCodeText != null) {
-            list.add(DataForSendToPrinterPos80.initializePrinter())
-            list.add(DataForSendToPrinterPos80.selectAlignment(1))
-            list.add(qrCodeDataToByteArray(qrCodeText, 250)!!)
-            list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    // -----------------------------
+    // Helper to wrap long item names
+    // -----------------------------
+    fun wrapText(text: String, width: Int): List<String> {
+        if (text.isEmpty()) return listOf("")
+        val words = text.split(" ")
+        val lines = mutableListOf<String>()
+        var current = StringBuilder()
+        for (word in words) {
+            if (current.isEmpty()) current.append(word)
+            else if (current.length + 1 + word.length <= width) current.append(" ").append(word)
+            else {
+                lines.add(current.toString())
+                current = StringBuilder(word)
+            }
         }
+        if (current.isNotEmpty()) lines.add(current.toString())
+        return lines
+    }
 
-        list.add("--------------------------------".encodeToByteArray())
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
-        list.add("Items       Qty   Price  Total  ".encodeToByteArray())
-        list.add("--------------------------------".encodeToByteArray())
+    // -----------------------------
+    // Add items (responsive)
+    // -----------------------------
+    for (item in items) {
+        val nameLines = wrapText(item.name, ITEM_NAME_WIDTH)
+        val qtyStr = item.quantity.toString().padStart(QTY_WIDTH)
+        val priceStr = "%.2f".format(item.price).padStart(PRICE_WIDTH)
+        val totalStr = "%.2f".format(item.total).padStart(TOTAL_WIDTH)
 
-        list.add(DataForSendToPrinterPos80.initializePrinter())
-
-        for (item in items) {
-            list.add(addOrderItemToPrintableString(item).encodeToByteArray())
+        nameLines.forEachIndexed { index, line ->
+            val row = if (index == 0) {
+                line.padEnd(ITEM_NAME_WIDTH) + qtyStr + priceStr + totalStr + "\n"
+            } else {
+                line + "\n" // only name on wrapped lines
+            }
+            list.add(row.encodeToByteArray())
         }
+    }
 
+    list.add("----------------------------------------".encodeToByteArray())
+    list.add(DataForSendToPrinterPos80.initializePrinter())
+
+    // -----------------------------
+    // Customer Note
+    // -----------------------------
+    if (customerNote != null) {
         list.add(DataForSendToPrinterPos80.initializePrinter())
         list.add(DataForSendToPrinterPos80.selectAlignment(2))
+        list.add("Note: $customerNote".encodeToByteArray())
         list.add("\n".encodeToByteArray())
-
-        if (customerNote != null) {
-            list.add(DataForSendToPrinterPos80.initializePrinter())
-            list.add(DataForSendToPrinterPos80.selectAlignment(2))
-            list.add("Note: $customerNote".encodeToByteArray())
-            list.add("\n".encodeToByteArray())
-            list.add("--------------------------------".encodeToByteArray())
-            list.add("\n".encodeToByteArray())
-        }
-
-
-        for (charge in otherCharges) {
-            list.add(DataForSendToPrinterPos80.selectAlignment(2))
-            list.add("${charge.name} ${charge.value}\n".encodeToByteArray())
-        }
-
         list.add("--------------------------------".encodeToByteArray())
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
-        list.add("Rs. ${orderTotal}".encodeToByteArray())
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
-        list.add("--------------------------------".encodeToByteArray())
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
-        list.add(DataForSendToPrinterPos80.selectOrCancelBoldModel(1))
-        list.add(deliveryType.encodeToByteArray())
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
-        list.add("--------------------------------".encodeToByteArray())
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
-
-        if (address != null) {
-            list.add(DataForSendToPrinterPos80.initializePrinter())
-            list.add(DataForSendToPrinterPos80.selectCharacterSize(2))
-            list.add(address.encodeToByteArray())
-            list.add(DataForSendToPrinterPos80.printAndFeedLine())
-        }
-
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
-        return list
+        list.add("\n".encodeToByteArray())
     }
+
+    // -----------------------------
+    // Other Charges
+    // -----------------------------
+    for (charge in otherCharges) {
+        list.add(DataForSendToPrinterPos80.selectAlignment(2))
+        list.add("${charge.name} ${charge.value}\n".encodeToByteArray())
+    }
+
+    list.add("------------------------------------------------".encodeToByteArray())
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    list.add(DataForSendToPrinterPos80.selectAlignment(2))
+    list.add("Rs. ${orderTotal}".encodeToByteArray())
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    list.add("--------------------------------".encodeToByteArray())
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    list.add(DataForSendToPrinterPos80.selectAlignment(2))
+    list.add(DataForSendToPrinterPos80.selectOrCancelBoldModel(1))
+    list.add(deliveryType.encodeToByteArray())
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    list.add("--------------------------------".encodeToByteArray())
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+
+    // -----------------------------
+    // Address
+    // -----------------------------
+    if (address != null) {
+        list.add(DataForSendToPrinterPos80.initializePrinter())
+        list.add(DataForSendToPrinterPos80.selectCharacterSize(2))
+        list.add(address.encodeToByteArray())
+        list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    }
+
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    list.add(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
+
+    return list
+}
 
     private fun qrCodeDataToByteArray(data: String?, size: Int): ByteArray? {
         var byteMatrix: ByteMatrix? = null

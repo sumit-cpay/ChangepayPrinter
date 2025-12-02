@@ -231,8 +231,10 @@ class CpayPrinterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
 
 
 private fun printReceiptV2WithBluetoothPrinter(call: MethodCall, result: Result) {
+
     val kotReceiptMap = call.argument<Map<String, Any>>("printReceiptV2")
     val kotEnabled = call.argument<Boolean>("kot_enabled") ?: false
+    val paperWidth = call.argument<Double>("paper_width") ?: 58.0   // <-- FIX ADDED
 
     if (kotReceiptMap == null) {
         result.error("INVALID_ARGUMENT", "No receipt data provided", null)
@@ -240,14 +242,9 @@ private fun printReceiptV2WithBluetoothPrinter(call: MethodCall, result: Result)
     }
 
     val gson = Gson()
-
-    // Use TypeToken for proper nested deserialization
-    val type = object : com.google.gson.reflect.TypeToken<KotPrintableReceiptV2>() {}.type
+    val type = object : TypeToken<KotPrintableReceiptV2>() {}.type
     val kotReceipt: KotPrintableReceiptV2 = gson.fromJson(gson.toJson(kotReceiptMap), type)
-
-    logger("Deserialized KOT receipt: $kotReceipt")
-    logger("KOT sections: ${kotReceipt.kotSections.keys}")
-
+    
     if (connectedThermalPrinter == null) {
         result.error("NO_PRINTER", "Connect to printer before printing", null)
         return
@@ -255,46 +252,47 @@ private fun printReceiptV2WithBluetoothPrinter(call: MethodCall, result: Result)
 
     try {
         bluetoothPrintBinder?.WriteSendData(object : TaskCallback {
-            override fun OnSucceed() {
-                result.success(true)
-            }
-
-            override fun OnFailed() {
-                result.error("PRINT_FAILED", "Failed to send data to printer", null)
-            }
+            override fun OnSucceed() { result.success(true) }
+            override fun OnFailed() { result.error("PRINT_FAILED", "Failed to print", null) }
         }, ProcessData {
+
             val list = mutableListOf<ByteArray>()
 
-            // --- 1. Main Receipt ---
-            list.addAll(kotReceipt.generateMainReceipt58())
+            // MAIN RECEIPT
+            if (paperWidth == 80.0) {
+                list.addAll(kotReceipt.generateMainReceipt80())
+            } else {
+                list.addAll(kotReceipt.generateMainReceipt58())
+            }
 
-            // --- 2. KOT Sections ---
-         kotReceipt.kotSections.forEach { (category, itemsAny) ->
-    // Convert List<Map<String, Any>> -> List<CartItemReceipt>
- val items: List<CartItemReceipt> = gson.fromJson(
-    gson.toJson(itemsAny),
-    object : TypeToken<List<CartItemReceipt>>() {}.type
-)
+            // KOT sections
+            kotReceipt.kotSections.forEach { (category, itemsAny) ->
+                val items: List<CartItemReceipt> = gson.fromJson(
+                    gson.toJson(itemsAny),
+                    object : TypeToken<List<CartItemReceipt>>() {}.type
+                )
 
+                val kot = KOTPrintableReceipt(
+                    orderId = kotReceipt.main.orderId,
+                    datetime = kotReceipt.main.datetime,
+                    businessName = kotReceipt.main.businessName,
+                    customerNote = kotReceipt.main.customerNote,
+                    items = items,
+                    categoryName = category
+                )
 
-    val kot = KOTPrintableReceipt(
-        orderId = kotReceipt.main.orderId,
-        datetime = kotReceipt.main.datetime,
-        businessName = kotReceipt.main.businessName,
-        customerNote = kotReceipt.main.customerNote,
-        items = items,
-        categoryName = category
-    )
-    list.addAll(kot.generateKOT58())
-    repeat(2) { list.add(DataForSendToPrinterPos58.printAndFeedLine()) }
-}
+                if (paperWidth == 80.0) {
+                    list.addAll(kot.generateKOT80())
+                } else {
+                    list.addAll(kot.generateKOT58())
+                }
 
-
-            // --- Final feed ---
-            repeat(2) { list.add(DataForSendToPrinterPos58.printAndFeedLine()) }
+                repeat(2) { list.add(DataForSendToPrinterPos58.printAndFeedLine()) }
+            }
 
             list
         })
+
     } catch (e: Exception) {
         e.printStackTrace()
         result.error("PRINT_FAILED", e.message, null)
