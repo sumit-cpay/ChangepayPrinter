@@ -62,7 +62,15 @@ list.add(DataForSendToPrinterPos58.selectCharacterSize(1))
 
 
 
-        list.add("Ph:${customerPhone}".encodeToByteArray())
+val phone = if (!customerPhone.isNullOrEmpty()) {
+    if (customerPhone.startsWith("+91") && customerPhone.length > 3)
+        "+91-" + customerPhone.substring(3)
+    else if (customerPhone.length == 10)
+        "+91-$customerPhone"
+    else customerPhone
+} else ""
+
+list.add("$phone\n".encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
 
         list.add(DataForSendToPrinterPos58.selectOrCancelBoldModel(1))
@@ -163,7 +171,15 @@ public fun generatePrintableByteArrayForPaperWidth80(qrCodeText: String? = null)
     list.add(businessName.encodeToByteArray())
     list.add(DataForSendToPrinterPos80.printAndFeedLine())
 
-    list.add("Ph:${customerPhone}\n".encodeToByteArray())
+val phone = if (!customerPhone.isNullOrEmpty()) {
+    if (customerPhone.startsWith("+91") && customerPhone.length > 3)
+        "+91-" + customerPhone.substring(3)
+    else if (customerPhone.length == 10)
+        "+91-$customerPhone"
+    else customerPhone
+} else ""
+
+list.add("$phone\n".encodeToByteArray())
     list.add(DataForSendToPrinterPos80.printAndFeedLine())
 
     list.add(DataForSendToPrinterPos80.selectOrCancelBoldModel(1))
