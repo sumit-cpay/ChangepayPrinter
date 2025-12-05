@@ -154,6 +154,7 @@ private fun formatItem58(item: CartItemReceipt): String {
             list.add("NOTE: $customerNote\n".toByteArray())
             list.add("------------------------------------------\n".toByteArray())
         }
+          list.add(DataForSendToPrinterPos58.selectAlignment(0))  // LEFT ALIGN
 
         list.add("Item                           Qty \n".toByteArray())
         list.add("------------------------------------------\n".toByteArray())
@@ -169,21 +170,32 @@ private fun formatItem58(item: CartItemReceipt): String {
         return list
     }
 
-    private val NAME_WIDTH_MAIN_80 = 26
-    private val PRICE_WIDTH_80 = 10
+    private val NAME_WIDTH_MAIN_80 = 30
+    private val PRICE_WIDTH_80 = 7
 
-    private fun formatItem80(item: CartItemReceipt): String {
-        val nameLines = wrapText(item.name, NAME_WIDTH_MAIN_80)
-        val qtyStr = item.quantity.toString()
+   private fun formatItem80(item: CartItemReceipt): String {
+    val NAME_WIDTH = NAME_WIDTH_MAIN_80
+    val nameLines = wrapText(item.name, NAME_WIDTH)
+    val qtyStr = item.quantity.toString()
 
-        val sb = StringBuilder()
-        sb.append("${nameLines[0].padEnd(NAME_WIDTH_MAIN_80, ' ')} ${qtyStr.padStart(4)}\n")
+    val sb = StringBuilder()
 
-        for (i in 1 until nameLines.size) {
-            sb.append("  ${nameLines[i]}\n")
-        }
-        return sb.toString()
+    // First line (same as KOT)
+    sb.append(nameLines[0].padEnd(NAME_WIDTH))
+    sb.append("  ")  // space before qty same as KOT
+    sb.append(qtyStr)
+    sb.append("\n")
+
+    // Wrapped lines (same as KOT)
+    for (i in 1 until nameLines.size) {
+        sb.append("  ")      // left padding same as KOT
+        sb.append(nameLines[i])
+        sb.append("\n")
     }
+
+    return sb.toString()
+}
+
 
     private fun formatMoney(value: Double): String = String.format(Locale.US, "%.2f", value)
 
@@ -232,7 +244,7 @@ data class KOTPrintableReceipt(
         }
 
         list.add(boldOn())
-        list.add("Item                   Qty\n".toByteArray())
+        list.add("Item                    Qty\n".toByteArray())
         list.add(boldOff())
 
         list.add("--------------------------------\n".toByteArray())
@@ -265,7 +277,7 @@ data class KOTPrintableReceipt(
         if (!customerNote.isNullOrEmpty()) list.add("NOTE: $customerNote\n\n".toByteArray())
 
         list.add(boldOn())
-        list.add("Item                             Qty\n".toByteArray())
+        list.add("Item                              Qty\n".toByteArray())
         list.add(boldOff())
 
         list.add("------------------------------------------\n".toByteArray())
