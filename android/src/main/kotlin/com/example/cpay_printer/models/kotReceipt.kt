@@ -16,7 +16,6 @@ fun boldOff(): ByteArray = byteArrayOf(0x1B, 0x45, 0x00)
 // =========================
 data class CartItemReceipt(
     val name: String = "",
-    val price: Double = 0.0,
     val quantity: Int = 0,
     val total: Double = 0.0,
     val category: String? = null
@@ -42,64 +41,94 @@ data class PrintableReceiptMain(
     // -------------------------------
     // 58 mm receipt
     // -------------------------------
-    fun generateMainReceipt58(): MutableList<ByteArray> {
-        val list = mutableListOf<ByteArray>()
-        list.add(DataForSendToPrinterPos58.initializePrinter())
-        list.add(DataForSendToPrinterPos58.selectAlignment(1))
+  fun generateMainReceipt58(): MutableList<ByteArray> {
+    val list = mutableListOf<ByteArray>()
 
-        list.add("**** MAIN RECEIPT ****\n".toByteArray())
-        list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
-        list.add("$orderId\n".toByteArray())
-        list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
+    val NAME_WIDTH_58 = 23
+    val QTY_WIDTH_58 = 3
 
-        list.add("Time: $datetime\n".toByteArray())
+    list.add(DataForSendToPrinterPos58.initializePrinter())
+    list.add(DataForSendToPrinterPos58.selectAlignment(1))
+
+    list.add("**** MAIN RECEIPT ****\n".toByteArray())
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
+    list.add("$orderId\n".toByteArray())
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
+
+    list.add("Time: $datetime\n".toByteArray())
+    list.add("--------------------------------\n".toByteArray())
+
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
+    list.add("Name: $customerName\n".toByteArray())
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
+    list.add("--------------------------------\n".toByteArray())
+
+    if (!customerNote.isNullOrEmpty()) {
+        list.add("NOTE: $customerNote\n".toByteArray())
         list.add("--------------------------------\n".toByteArray())
-        list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
-        list.add("Name: $customerName\n".toByteArray())
-        list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
-        list.add("--------------------------------\n".toByteArray())
-
-        if (!customerNote.isNullOrEmpty()) {
-            list.add("NOTE: $customerNote\n".toByteArray())
-            list.add("--------------------------------\n".toByteArray())
-        }
-
-        list.add("Item               Qty   Price\n".toByteArray())
-        list.add("-------------------------------\n".toByteArray())
-
-        items.forEach { list.add(formatItem58(it).toByteArray()) }
-
-        list.add("--------------------------------\n".toByteArray())
-
-        otherCharges.forEach { (name, amount) -> list.add("$name: ${formatMoney(amount)}\n".toByteArray()) }
-        list.add("TOTAL: ${formatMoney(orderTotal)}\n".toByteArray())
-        list.add("--------------------------------\n".toByteArray())
-
-        repeat(2) { list.add(DataForSendToPrinterPos58.printAndFeedLine()) }
-        list.add(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
-        return list
     }
 
-    private fun formatItem58(item: CartItemReceipt): String {
-        val NAME_WIDTH = 18
-        val QTY_WIDTH = 3
-        val PRICE_WIDTH = 7
-        val nameLines = wrapText(item.name, NAME_WIDTH)
-        val qtyStr = item.quantity.toString()
-        val priceStr = formatMoney(item.price)
+    // ---------- HEADER ----------
+    val header =
+        "Item".padEnd(NAME_WIDTH_58) +
+                "  " +                     
+                "Qty\n"
+list.add(DataForSendToPrinterPos58.selectAlignment(0))  // <<< FIX
 
-        val sb = StringBuilder()
-        val firstName = nameLines.firstOrNull() ?: ""
-        sb.append("${firstName.padEnd(NAME_WIDTH, ' ')} ${qtyStr.padStart(QTY_WIDTH, ' ')} ${priceStr.padStart(PRICE_WIDTH, ' ')}\n")
+    list.add(header.toByteArray())
+    list.add("--------------------------------\n".toByteArray())
 
-        if (nameLines.size > 1) {
-            for (i in 1 until nameLines.size) {
-                sb.append("  ${nameLines[i]}\n")
-            }
-        }
-
-        return sb.toString()
+    // ---------- ITEMS ----------
+    items.forEach {
+        list.add(formatItem58(it).toByteArray())
     }
+
+    list.add("--------------------------------\n".toByteArray())
+
+    // ---------- CHARGES ----------
+    otherCharges.forEach { (name, amount) ->
+        list.add("$name: ${formatMoney(amount)}\n".toByteArray())
+    }
+
+    list.add("TOTAL: ${formatMoney(orderTotal)}\n".toByteArray())
+    list.add("--------------------------------\n".toByteArray())
+
+    repeat(2) { list.add(DataForSendToPrinterPos58.printAndFeedLine()) }
+
+    // cut
+    list.add(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
+
+    return list
+}
+
+
+// --------------------------------
+// 58mm item formatter
+// --------------------------------
+
+private fun formatItem58(item: CartItemReceipt): String {
+    val NAME_WIDTH = 23
+    val qty = item.quantity.toString()
+
+    val nameLines = wrapText(item.name, NAME_WIDTH)
+    val sb = StringBuilder()
+
+    // First line — same as KOT
+    sb.append(nameLines[0].padEnd(NAME_WIDTH))
+    sb.append("  ")
+    sb.append(qty)
+    sb.append("\n")
+
+    // Next lines — add 2 spaces same as KOT
+    for (i in 1 until nameLines.size) {
+        sb.append("  ")
+        sb.append(nameLines[i])
+        sb.append("\n")
+    }
+
+    return sb.toString()
+}
+
 
     // -------------------------------
     // 80 mm receipt
@@ -126,7 +155,7 @@ data class PrintableReceiptMain(
             list.add("------------------------------------------\n".toByteArray())
         }
 
-        list.add("Item                       Qty     Price\n".toByteArray())
+        list.add("Item                           Qty \n".toByteArray())
         list.add("------------------------------------------\n".toByteArray())
 
         items.forEach { list.add(formatItem80(it).toByteArray()) }
@@ -146,10 +175,9 @@ data class PrintableReceiptMain(
     private fun formatItem80(item: CartItemReceipt): String {
         val nameLines = wrapText(item.name, NAME_WIDTH_MAIN_80)
         val qtyStr = item.quantity.toString()
-        val priceStr = formatMoney(item.price)
 
         val sb = StringBuilder()
-        sb.append("${nameLines[0].padEnd(NAME_WIDTH_MAIN_80, ' ')} ${qtyStr.padStart(4)} ${priceStr.padStart(PRICE_WIDTH_80, ' ')}\n")
+        sb.append("${nameLines[0].padEnd(NAME_WIDTH_MAIN_80, ' ')} ${qtyStr.padStart(4)}\n")
 
         for (i in 1 until nameLines.size) {
             sb.append("  ${nameLines[i]}\n")
@@ -208,8 +236,9 @@ data class KOTPrintableReceipt(
         list.add(boldOff())
 
         list.add("--------------------------------\n".toByteArray())
+        list.add(boldOn())
         items.forEach { list.add(formatItem58(it).toByteArray()) }
-
+   list.add(boldOff())
         repeat(2) { list.add(DataForSendToPrinterPos58.printAndFeedLine()) }
         list.add(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
         return list

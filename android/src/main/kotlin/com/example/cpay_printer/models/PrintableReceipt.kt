@@ -15,6 +15,8 @@ import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 
+
+
 class PrintableReceipt(
     @SerializedName("address")
     val address: String?,
@@ -73,9 +75,12 @@ val phone = if (!customerPhone.isNullOrEmpty()) {
 list.add("$phone\n".encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
 
-        list.add(DataForSendToPrinterPos58.selectOrCancelBoldModel(1))
-        list.add("Name:${customerName}".encodeToByteArray())
-        list.add(DataForSendToPrinterPos58.printAndFeedLine())
+// --- Customer Name (Same as your first receipt class) ---
+list.add(DataForSendToPrinterPos58.selectCharacterSize(18))   
+list.add(DataForSendToPrinterPos58.selectAlignment(1))       
+list.add("Name: $customerName\n".encodeToByteArray())
+list.add(DataForSendToPrinterPos58.selectCharacterSize(0))    
+
 
         list.add(DataForSendToPrinterPos58.initializePrinter())
         list.add(DataForSendToPrinterPos58.selectCharacterSize(1))
@@ -182,9 +187,12 @@ val phone = if (!customerPhone.isNullOrEmpty()) {
 list.add("$phone\n".encodeToByteArray())
     list.add(DataForSendToPrinterPos80.printAndFeedLine())
 
-    list.add(DataForSendToPrinterPos80.selectOrCancelBoldModel(1))
-    list.add("Name:${customerName}\n".encodeToByteArray())
-    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+ // --- Customer Name (Same look as 58mm version) ---
+list.add(DataForSendToPrinterPos80.selectCharacterSize(18))  
+list.add(DataForSendToPrinterPos80.selectAlignment(1))        
+list.add("Name: $customerName\n".encodeToByteArray())
+list.add(DataForSendToPrinterPos80.selectCharacterSize(0))   
+
 
     list.add(DataForSendToPrinterPos80.initializePrinter())
     list.add(DataForSendToPrinterPos80.selectCharacterSize(1))
