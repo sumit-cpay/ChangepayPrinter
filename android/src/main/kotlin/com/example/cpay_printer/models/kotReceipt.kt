@@ -11,6 +11,23 @@ import kotlin.math.min
 fun boldOn(): ByteArray = byteArrayOf(0x1B, 0x45, 0x01)
 fun boldOff(): ByteArray = byteArrayOf(0x1B, 0x45, 0x00)
 
+
+private fun wrapText(text: String, width: Int): List<String> {
+    if (text.isBlank()) return listOf("")
+
+    val result = mutableListOf<String>()
+    var remaining = text.trim()
+
+    while (remaining.length > width) {
+        result.add(remaining.substring(0, width))
+        remaining = remaining.substring(width)
+    }
+
+    if (remaining.isNotEmpty()) result.add(remaining)
+    return result
+}
+
+
 // =========================
 // Cart Item for Receipt
 // =========================
@@ -107,27 +124,31 @@ list.add(DataForSendToPrinterPos58.selectAlignment(0))  // <<< FIX
 // --------------------------------
 
 private fun formatItem58(item: CartItemReceipt): String {
-    val NAME_WIDTH = 23
-    val qty = item.quantity.toString()
+    val NAME_WIDTH = 20
+    val QTY_WIDTH = 6
 
-    val nameLines = wrapText(item.name, NAME_WIDTH)
+    val lines = wrapText(item.name.trimStart(), NAME_WIDTH)
+    val qty = item.quantity.toString().padStart(QTY_WIDTH)
+
     val sb = StringBuilder()
 
-    // First line — same as KOT
-    sb.append(nameLines[0].padEnd(NAME_WIDTH))
+    // First line
+    sb.append(lines[0].take(NAME_WIDTH).padEnd(NAME_WIDTH))
     sb.append("  ")
-    sb.append(qty)
+    sb.append(qty.take(QTY_WIDTH))
     sb.append("\n")
 
-    // Next lines — add 2 spaces same as KOT
-    for (i in 1 until nameLines.size) {
-        sb.append("  ")
-        sb.append(nameLines[i])
+    // Wrapped lines — NO LEFT PADDING
+    for (i in 1 until lines.size) {
+        sb.append(lines[i].take(NAME_WIDTH))
         sb.append("\n")
     }
 
     return sb.toString()
 }
+
+
+
 
 
     // -------------------------------
@@ -156,7 +177,7 @@ private fun formatItem58(item: CartItemReceipt): String {
         }
           list.add(DataForSendToPrinterPos58.selectAlignment(0))  // LEFT ALIGN
 
-        list.add("Item                           Qty \n".toByteArray())
+        list.add("Item                             Qty \n".toByteArray())
         list.add("------------------------------------------\n".toByteArray())
 
         items.forEach { list.add(formatItem80(it).toByteArray()) }
@@ -173,23 +194,24 @@ private fun formatItem58(item: CartItemReceipt): String {
     private val NAME_WIDTH_MAIN_80 = 30
     private val PRICE_WIDTH_80 = 7
 
-   private fun formatItem80(item: CartItemReceipt): String {
-    val NAME_WIDTH = NAME_WIDTH_MAIN_80
-    val nameLines = wrapText(item.name, NAME_WIDTH)
-    val qtyStr = item.quantity.toString()
+ private fun formatItem80(item: CartItemReceipt): String {
+    val NAME_WIDTH = NAME_WIDTH_MAIN_80   // 30
+    val QTY_WIDTH = 5
+
+    val lines = wrapText(item.name.trimStart(), NAME_WIDTH)
+    val qty = item.quantity.toString().padStart(QTY_WIDTH)
 
     val sb = StringBuilder()
 
-    // First line (same as KOT)
-    sb.append(nameLines[0].padEnd(NAME_WIDTH))
-    sb.append("  ")  // space before qty same as KOT
-    sb.append(qtyStr)
+    // First line
+    sb.append(lines[0].take(NAME_WIDTH).padEnd(NAME_WIDTH))
+    sb.append("  ")
+    sb.append(qty)
     sb.append("\n")
 
-    // Wrapped lines (same as KOT)
-    for (i in 1 until nameLines.size) {
-        sb.append("  ")      // left padding same as KOT
-        sb.append(nameLines[i])
+   
+    for (i in 1 until lines.size) {
+        sb.append(lines[i].take(NAME_WIDTH))
         sb.append("\n")
     }
 
@@ -197,24 +219,10 @@ private fun formatItem58(item: CartItemReceipt): String {
 }
 
 
+
     private fun formatMoney(value: Double): String = String.format(Locale.US, "%.2f", value)
 
-    private fun wrapText(text: String, width: Int): List<String> {
-        if (text.isEmpty()) return listOf("")
-        val words = text.split(Regex("\\s+"))
-        val lines = mutableListOf<String>()
-        var current = StringBuilder()
-        for (word in words) {
-            if (current.isEmpty()) current.append(word)
-            else if (current.length + 1 + word.length <= width) current.append(" ").append(word)
-            else {
-                lines.add(current.toString())
-                current = StringBuilder(word)
-            }
-        }
-        if (current.isNotEmpty()) lines.add(current.toString())
-        return lines
-    }
+   
 }
 
 // =========================
@@ -244,7 +252,7 @@ data class KOTPrintableReceipt(
         }
 
         list.add(boldOn())
-        list.add("Item                    Qty\n".toByteArray())
+        list.add("Item                      Qty\n".toByteArray())
         list.add(boldOff())
 
         list.add("--------------------------------\n".toByteArray())
@@ -258,14 +266,32 @@ data class KOTPrintableReceipt(
 
     private val NAME_KOT_58 = 23
 
-    private fun formatItem58(item: CartItemReceipt): String {
-        val lines = wrapText(item.name, NAME_KOT_58)
-        val q = item.quantity.toString()
-        val sb = StringBuilder()
-        sb.append("${lines[0].padEnd(NAME_KOT_58)}  $q\n")
-        for (i in 1 until lines.size) sb.append("  ${lines[i]}\n")
-        return sb.toString()
+ private fun formatItem58(item: CartItemReceipt): String {
+    val NAME_WIDTH = 20
+    val QTY_WIDTH = 6
+
+    val lines = wrapText(item.name.trim(), NAME_WIDTH)
+    val q = item.quantity.toString().padStart(QTY_WIDTH)
+
+    val sb = StringBuilder()
+
+    // First line
+    sb.append(lines[0].take(NAME_WIDTH).padEnd(NAME_WIDTH))
+    sb.append("  ")
+    sb.append(q.take(QTY_WIDTH))
+    sb.append("\n")
+
+    // Wrapped lines — NO LEFT SPACE
+    for (i in 1 until lines.size) {
+        sb.append(lines[i].take(NAME_WIDTH))  
+        sb.append("\n")
     }
+
+    return sb.toString()
+}
+
+
+
 
     fun generateKOT80(): MutableList<ByteArray> {
         val list = mutableListOf<ByteArray>()
@@ -290,30 +316,32 @@ data class KOTPrintableReceipt(
 
     private val NAME_KOT_80 = 31
 
-    private fun formatItem80(item: CartItemReceipt): String {
-        val lines = wrapText(item.name, NAME_KOT_80)
-        val q = item.quantity.toString().padStart(4)
-        val sb = StringBuilder()
-        sb.append("${lines[0].padEnd(NAME_KOT_80)} $q\n")
-        for (i in 1 until lines.size) sb.append("  ${lines[i]}\n")
-        return sb.toString()
+  private fun formatItem80(item: CartItemReceipt): String {
+    val NAME_WIDTH = NAME_KOT_80   // 31
+    val QTY_WIDTH = 4
+
+    val lines = wrapText(item.name.trimStart(), NAME_WIDTH)
+    val q = item.quantity.toString().padStart(QTY_WIDTH)
+
+    val sb = StringBuilder()
+
+    // First line
+    sb.append(lines[0].take(NAME_WIDTH).padEnd(NAME_WIDTH))
+    sb.append("  ")
+    sb.append(q)
+    sb.append("\n")
+
+  
+    for (i in 1 until lines.size) {
+        sb.append(lines[i].take(NAME_WIDTH))
+        sb.append("\n")
     }
 
-    private fun wrapText(text: String, width: Int): List<String> {
-        if (text.isEmpty()) return listOf("")
-        val out = mutableListOf<String>()
-        var line = StringBuilder()
-        for (w in text.split(" ")) {
-            if (line.isEmpty()) line.append(w)
-            else if (line.length + w.length + 1 <= width) line.append(" ").append(w)
-            else {
-                out.add(line.toString())
-                line = StringBuilder(w)
-            }
-        }
-        if (line.isNotEmpty()) out.add(line.toString())
-        return out
-    }
+    return sb.toString()
+}
+
+
+
 }
 
 // =========================

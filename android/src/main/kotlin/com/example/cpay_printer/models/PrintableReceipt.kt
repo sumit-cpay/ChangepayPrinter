@@ -71,9 +71,10 @@ val phone = if (!customerPhone.isNullOrEmpty()) {
         "+91-$customerPhone"
     else customerPhone
 } else ""
-
+list.add(byteArrayOf(0x1B, 0x45, 0x01))
 list.add("$phone\n".encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
+list.add(byteArrayOf(0x1B, 0x45, 0x00))
 
 // --- Customer Name (Same as your first receipt class) ---
 list.add(DataForSendToPrinterPos58.selectCharacterSize(18))   
@@ -247,21 +248,33 @@ list.add(DataForSendToPrinterPos80.selectCharacterSize(0))
     // -----------------------------
     // Add items (responsive)
     // -----------------------------
-    for (item in items) {
-        val nameLines = wrapText(item.name, ITEM_NAME_WIDTH)
-        val qtyStr = item.quantity.toString().padStart(QTY_WIDTH)
-        val priceStr = "%.2f".format(item.price).padStart(PRICE_WIDTH)
-        val totalStr = "%.2f".format(item.total).padStart(TOTAL_WIDTH)
+  for (item in items) {
 
-        nameLines.forEachIndexed { index, line ->
-            val row = if (index == 0) {
-                line.padEnd(ITEM_NAME_WIDTH) + qtyStr + priceStr + totalStr + "\n"
-            } else {
-                line + "\n" // only name on wrapped lines
-            }
-            list.add(row.encodeToByteArray())
-        }
+    val nameLines = wrapText(item.name.trimStart(), ITEM_NAME_WIDTH)
+
+    val qtyStr   = item.quantity.toString().padStart(QTY_WIDTH)
+    val priceStr = "%.2f".format(item.price).padStart(PRICE_WIDTH)
+    val totalStr = "%.2f".format(item.total).padStart(TOTAL_WIDTH)
+
+    val firstLine =
+        nameLines[0].take(ITEM_NAME_WIDTH).padEnd(ITEM_NAME_WIDTH) +
+        qtyStr +
+        priceStr +
+        totalStr +
+        "\n"
+
+    list.add(firstLine.encodeToByteArray())
+
+    for (i in 1 until nameLines.size) {
+        val wrapLine =
+            nameLines[i].take(ITEM_NAME_WIDTH).padEnd(ITEM_NAME_WIDTH) +
+            " ".repeat(QTY_WIDTH + PRICE_WIDTH + TOTAL_WIDTH) +
+            "\n"
+
+        list.add(wrapLine.encodeToByteArray())
     }
+}
+
 
     list.add("----------------------------------------".encodeToByteArray())
     list.add(DataForSendToPrinterPos80.initializePrinter())
