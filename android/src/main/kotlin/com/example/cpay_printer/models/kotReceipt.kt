@@ -89,7 +89,7 @@ data class PrintableReceiptMain(
     val header =
         "Item".padEnd(NAME_WIDTH_58) +
                 "  " +                     
-                "Qty\n"
+                " Qty\n"
 list.add(DataForSendToPrinterPos58.selectAlignment(0))  // <<< FIX
 
     list.add(header.toByteArray())
@@ -107,8 +107,7 @@ list.add(DataForSendToPrinterPos58.selectAlignment(0))  // <<< FIX
         list.add("$name: ${formatMoney(amount)}\n".toByteArray())
     }
 
-    list.add("TOTAL: ${formatMoney(orderTotal)}\n".toByteArray())
-    list.add("--------------------------------\n".toByteArray())
+
 
     repeat(2) { list.add(DataForSendToPrinterPos58.printAndFeedLine()) }
 
@@ -140,7 +139,7 @@ private fun formatItem58(item: CartItemReceipt): String {
 
     // Wrapped lines — NO LEFT PADDING
     for (i in 1 until lines.size) {
-        sb.append(lines[i].take(NAME_WIDTH))
+        sb.append(lines[i].take(NAME_WIDTH)) // ✅ no "  "
         sb.append("\n")
     }
 
@@ -184,7 +183,6 @@ private fun formatItem58(item: CartItemReceipt): String {
 
         list.add("------------------------------------------\n".toByteArray())
         otherCharges.forEach { (name, amount) -> list.add("$name: ${formatMoney(amount)}\n".toByteArray()) }
-        list.add("TOTAL: ${formatMoney(orderTotal)}\n".toByteArray())
 
         repeat(3) { list.add(DataForSendToPrinterPos58.printAndFeedLine()) }
         list.add(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
@@ -209,7 +207,7 @@ private fun formatItem58(item: CartItemReceipt): String {
     sb.append(qty)
     sb.append("\n")
 
-   
+    // Wrapped lines — ✅ NO LEFT SPACE
     for (i in 1 until lines.size) {
         sb.append(lines[i].take(NAME_WIDTH))
         sb.append("\n")
@@ -259,7 +257,7 @@ data class KOTPrintableReceipt(
         list.add(boldOn())
         items.forEach { list.add(formatItem58(it).toByteArray()) }
    list.add(boldOff())
-        repeat(2) { list.add(DataForSendToPrinterPos58.printAndFeedLine()) }
+list.add(DataForSendToPrinterPos58.printAndFeedLine())  // only 1 line
         list.add(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
         return list
     }
@@ -283,7 +281,7 @@ data class KOTPrintableReceipt(
 
     // Wrapped lines — NO LEFT SPACE
     for (i in 1 until lines.size) {
-        sb.append(lines[i].take(NAME_WIDTH))  
+        sb.append(lines[i].take(NAME_WIDTH))  // ✅ removed leading spaces
         sb.append("\n")
     }
 
@@ -309,7 +307,7 @@ data class KOTPrintableReceipt(
         list.add("------------------------------------------\n".toByteArray())
         items.forEach { list.add(formatItem80(it).toByteArray()) }
 
-        repeat(2) { list.add(DataForSendToPrinterPos58.printAndFeedLine()) }
+list.add(DataForSendToPrinterPos58.printAndFeedLine())  // only 1 line
         list.add(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
         return list
     }
@@ -331,7 +329,7 @@ data class KOTPrintableReceipt(
     sb.append(q)
     sb.append("\n")
 
-  
+    // Wrapped lines — ✅ NO LEFT SPACE
     for (i in 1 until lines.size) {
         sb.append(lines[i].take(NAME_WIDTH))
         sb.append("\n")

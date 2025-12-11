@@ -71,10 +71,12 @@ val phone = if (!customerPhone.isNullOrEmpty()) {
         "+91-$customerPhone"
     else customerPhone
 } else ""
+list.add(DataForSendToPrinterPos58.selectAlignment(1))       
 list.add(byteArrayOf(0x1B, 0x45, 0x01))
 list.add("$phone\n".encodeToByteArray())
-        list.add(DataForSendToPrinterPos58.printAndFeedLine())
 list.add(byteArrayOf(0x1B, 0x45, 0x00))
+list.add(DataForSendToPrinterPos58.selectCharacterSize(0))    
+
 
 // --- Customer Name (Same as your first receipt class) ---
 list.add(DataForSendToPrinterPos58.selectCharacterSize(18))   
@@ -139,7 +141,7 @@ list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
         list.add(DataForSendToPrinterPos58.selectOrCancelBoldModel(1))
         list.add(deliveryType.encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
-        list.add("--------------------------------".encodeToByteArray())
+        list.add("-------------------------------".encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
 
         if (address != null) {
@@ -150,9 +152,7 @@ list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
         }
 
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
-        list.add(DataForSendToPrinterPos58.printAndFeedLine())
-        list.add(DataForSendToPrinterPos58.printAndFeedLine())
-        list.add(DataForSendToPrinterPos58.printAndFeedLine())
+
 
         val data = byteArrayOf(27, 109)
         list.add(data)
@@ -186,7 +186,6 @@ val phone = if (!customerPhone.isNullOrEmpty()) {
 } else ""
 
 list.add("$phone\n".encodeToByteArray())
-    list.add(DataForSendToPrinterPos80.printAndFeedLine())
 
  // --- Customer Name (Same look as 58mm version) ---
 list.add(DataForSendToPrinterPos80.selectCharacterSize(18))  
@@ -325,8 +324,7 @@ list.add(DataForSendToPrinterPos80.selectCharacterSize(0))
 
     list.add(DataForSendToPrinterPos80.printAndFeedLine())
     list.add(DataForSendToPrinterPos80.printAndFeedLine())
-    list.add(DataForSendToPrinterPos80.printAndFeedLine())
-    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+
     list.add(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
 
     return list
@@ -404,52 +402,57 @@ list.add(DataForSendToPrinterPos80.selectCharacterSize(0))
         imageBytes[7] = yH.toByte()
         return imageBytes
     }
-    fun addOrderItemToPrintableString(orderItem: CartItem): String {
-        val ITEM_NAME_WIDTH = 12;
-        val ITEM_QTY_WIDTH = 6;
-        val ITEM_PRICE_WIDTH = 7;
-        val ITEM_TOTAL_WIDTH = 7;
-        val startIndexed = mutableListOf<Int>(0,0,0,0)
-        var printableOrderItemString = ""
-        while (true) {
-            if (startIndexed[0] == orderItem.name.length &&
-                startIndexed[1] == orderItem.quantity.toString().length &&
-                startIndexed[2] == orderItem.price.toString().length &&
-                startIndexed[3] == orderItem.total.toString().length) break;
-            val endIndex1 = min(
-                startIndexed[0] + ITEM_NAME_WIDTH - 1,
-                orderItem.name.length);
-            val name = orderItem.name.substring(startIndexed[0], endIndex1);
+ fun addOrderItemToPrintableString(orderItem: CartItem): String {
+    val ITEM_NAME_WIDTH = 12
+    val ITEM_QTY_WIDTH = 6
+    val ITEM_PRICE_WIDTH = 7
+    val ITEM_TOTAL_WIDTH = 7
 
+    val startIndexed = mutableListOf(0, 0, 0, 0)
+    var printableOrderItemString = ""
 
-            startIndexed[0] = endIndex1;
-            printableOrderItemString += name + " " + " ".repeat (ITEM_NAME_WIDTH - name.length - 1)
+    while (true) {
+        if (startIndexed[0] == orderItem.name.length &&
+            startIndexed[1] == orderItem.quantity.toString().length &&
+            startIndexed[2] == orderItem.price.toString().length &&
+            startIndexed[3] == orderItem.total.toString().length
+        ) break
 
-            val endIndex2 = min(
-                startIndexed[1] + ITEM_QTY_WIDTH - 1,
-                orderItem.quantity.toString().length);
-            val quantity = orderItem.quantity.toString().substring(startIndexed[1], endIndex2);
-            startIndexed[1] = endIndex2;
-            printableOrderItemString += quantity + " " + " ".repeat (ITEM_QTY_WIDTH - quantity.length - 1)
+        // ---- NAME ----
+        val endIndex1 = min(startIndexed[0] + ITEM_NAME_WIDTH - 1, orderItem.name.length)
+        val name = orderItem.name.substring(startIndexed[0], endIndex1)
+        startIndexed[0] = endIndex1
+        printableOrderItemString += name + " ".repeat(ITEM_NAME_WIDTH - name.length)
 
-            val endIndex3 = min(
-                startIndexed[2] + ITEM_PRICE_WIDTH - 1,
-                orderItem.price.toString().length);
-            val price = orderItem.price.toString().substring(startIndexed[2], endIndex3);
-            startIndexed[2] = endIndex3;
-            printableOrderItemString += price + " " + " ".repeat (ITEM_PRICE_WIDTH - price.length - 1)
+        // ---- QTY ----
+        val endIndex2 = min(startIndexed[1] + ITEM_QTY_WIDTH - 1, orderItem.quantity.toString().length)
+        val quantity = orderItem.quantity.toString().substring(startIndexed[1], endIndex2)
+        startIndexed[1] = endIndex2
+        printableOrderItemString += quantity + " ".repeat(ITEM_QTY_WIDTH - quantity.length)
 
-            val endIndex4 = min(
-                startIndexed[3] + ITEM_TOTAL_WIDTH - 1,
-                orderItem.total.toString().length);
-            val total = orderItem.total.toString().substring(startIndexed[3], endIndex4);
-            startIndexed[3] = endIndex4;
-            printableOrderItemString += total + " " + " ".repeat (ITEM_TOTAL_WIDTH - price.length - 1)
-            printableOrderItemString += '\n'
-        }
-        printableOrderItemString += "--------------------------------"
-        return printableOrderItemString
+        // ---- PRICE ----
+        val endIndex3 = min(startIndexed[2] + ITEM_PRICE_WIDTH - 1, orderItem.price.toString().length)
+        val price = orderItem.price.toString().substring(startIndexed[2], endIndex3)
+        startIndexed[2] = endIndex3
+        printableOrderItemString += price + " ".repeat(ITEM_PRICE_WIDTH - price.length)
+
+        // ---- TOTAL (CENTER aligned) ----
+        val endIndex4 = min(startIndexed[3] + ITEM_TOTAL_WIDTH - 1, orderItem.total.toString().length)
+        val total = orderItem.total.toString().substring(startIndexed[3], endIndex4)
+        startIndexed[3] = endIndex4
+
+        val spaceLeft = (ITEM_TOTAL_WIDTH - total.length) / 2
+        val spaceRight = ITEM_TOTAL_WIDTH - total.length - spaceLeft
+
+        printableOrderItemString += " ".repeat(spaceLeft) + total + " ".repeat(spaceRight)
+
+        printableOrderItemString += '\n'
     }
+
+    printableOrderItemString += "--------------------------------"
+    return printableOrderItemString
+}
+
 }
 
 data class CartItem(

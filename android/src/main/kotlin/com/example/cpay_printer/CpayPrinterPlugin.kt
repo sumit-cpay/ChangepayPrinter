@@ -234,43 +234,63 @@ private fun printReceiptV2WithBluetoothPrinter(call: MethodCall, result: Result)
 
     val kotReceiptMap = call.argument<Map<String, Any>>("printReceiptV2")
     val kotEnabled = call.argument<Boolean>("kot_enabled") ?: false
-    val paperWidth = call.argument<Double>("paper_width") ?: 58.0   // <-- FIX ADDED
+    val paperWidth = call.argument<Double>("paper_width") ?: 58.0
 
     if (kotReceiptMap == null) {
         result.error("INVALID_ARGUMENT", "No receipt data provided", null)
         return
     }
 
-    val gson = Gson()
-    val type = object : TypeToken<KotPrintableReceiptV2>() {}.type
-    val kotReceipt: KotPrintableReceiptV2 = gson.fromJson(gson.toJson(kotReceiptMap), type)
-    
     if (connectedThermalPrinter == null) {
         result.error("NO_PRINTER", "Connect to printer before printing", null)
         return
     }
 
     try {
+        val gson = Gson()
+
+        val mainMap = kotReceiptMap["main"]
+        val mainReceipt = gson.fromJson(
+            gson.toJson(mainMap),
+            PrintableReceiptMain::class.java
+        )
+
+        val rawKotSections = kotReceiptMap["kotSections"] as? Map<*, *> ?: emptyMap<String, Any>()
+        val safeKotSections = mutableMapOf<String, List<CartItemReceipt>>()
+
+        for ((key, value) in rawKotSections) {
+            val items: List<CartItemReceipt> = gson.fromJson(
+                gson.toJson(value),
+                Array<CartItemReceipt>::class.java
+            ).toList()
+
+            safeKotSections[key.toString()] = items
+        }
+
+        val kotReceipt = KotPrintableReceiptV2(
+            main = mainReceipt,
+            kotSections = safeKotSections
+        )
+
         bluetoothPrintBinder?.WriteSendData(object : TaskCallback {
-            override fun OnSucceed() { result.success(true) }
-            override fun OnFailed() { result.error("PRINT_FAILED", "Failed to print", null) }
+            override fun OnSucceed() {
+                result.success(true)
+            }
+
+            override fun OnFailed() {
+                result.error("PRINT_FAILED", "Failed to print", null)
+            }
         }, ProcessData {
 
             val list = mutableListOf<ByteArray>()
 
-            // MAIN RECEIPT
             if (paperWidth == 80.0) {
                 list.addAll(kotReceipt.generateMainReceipt80())
             } else {
                 list.addAll(kotReceipt.generateMainReceipt58())
             }
 
-            // KOT sections
-            kotReceipt.kotSections.forEach { (category, itemsAny) ->
-                val items: List<CartItemReceipt> = gson.fromJson(
-                    gson.toJson(itemsAny),
-                    object : TypeToken<List<CartItemReceipt>>() {}.type
-                )
+            for ((category, items) in kotReceipt.kotSections) {
 
                 val kot = KOTPrintableReceipt(
                     orderId = kotReceipt.main.orderId,
