@@ -166,7 +166,7 @@ private fun formatItem58(item: CartItemReceipt): String {
         list.add("Time: $datetime\n".toByteArray())
         list.add("------------------------------------------\n".toByteArray())
                 list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
-        list.add("Name: $customerName\n".toByteArray())
+        list.add(" $customerName\n".toByteArray())
                 list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
 
        list.add("-------------------------------------------\n".toByteArray())
@@ -176,7 +176,7 @@ private fun formatItem58(item: CartItemReceipt): String {
         }
           list.add(DataForSendToPrinterPos58.selectAlignment(0))  // LEFT ALIGN
 
-        list.add("Item                             Qty \n".toByteArray())
+        list.add("Item                               Qty \n".toByteArray())
         list.add("------------------------------------------\n".toByteArray())
 
         items.forEach { list.add(formatItem80(it).toByteArray()) }
@@ -250,7 +250,7 @@ data class KOTPrintableReceipt(
         }
 
         list.add(boldOn())
-        list.add("Item                      Qty\n".toByteArray())
+        list.add("Item                       Qty\n".toByteArray())
         list.add(boldOff())
 
         list.add("--------------------------------\n".toByteArray())

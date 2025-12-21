@@ -88,7 +88,7 @@ class BluetoothPrinter {
       'customerPhone': kotReceiptV2.main.customerPhone,
       'customerName': kotReceiptV2.main.customerName,
       'deliveryType': kotReceiptV2.main.deliveryType,
-      'address': kotReceiptV2.main.address,
+      'address': kotReceiptV2.main.address, 
       'customerNote': kotReceiptV2.main.customerNote,
       'items': kotReceiptV2.main.items.map((item) {
         return {
@@ -99,9 +99,11 @@ class BluetoothPrinter {
           'category': item.category,
         };
       }).toList(),
-      'otherCharges': kotReceiptV2.main.otherCharges,
-      'discount': kotReceiptV2.main.otherCharges.fold<double>(
-          0.0, (sum, e) => sum + (e['discount'] ?? 0.0)),
+     'otherCharges': kotReceiptV2.main.otherCharges.map((e) => {
+  'name': e['name'] ?? '',
+  'value': (e['value'] ?? 0).toDouble(),
+}).toList(),
+
       'orderTotal': kotReceiptV2.main.orderTotal,
     };
 

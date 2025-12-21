@@ -71,7 +71,8 @@ val phone = if (!customerPhone.isNullOrEmpty()) {
         "+91-$customerPhone"
     else customerPhone
 } else ""
-list.add(DataForSendToPrinterPos58.selectAlignment(1))       
+list.add(DataForSendToPrinterPos58.selectAlignment(1))    
+list.add(DataForSendToPrinterPos58.selectCharacterSize(18))     
 list.add(byteArrayOf(0x1B, 0x45, 0x01))
 list.add("$phone\n".encodeToByteArray())
 list.add(byteArrayOf(0x1B, 0x45, 0x00))
@@ -81,7 +82,7 @@ list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
 // --- Customer Name (Same as your first receipt class) ---
 list.add(DataForSendToPrinterPos58.selectCharacterSize(18))   
 list.add(DataForSendToPrinterPos58.selectAlignment(1))       
-list.add("Name: $customerName\n".encodeToByteArray())
+list.add("$customerName\n".encodeToByteArray())
 list.add(DataForSendToPrinterPos58.selectCharacterSize(0))    
 
 
@@ -152,6 +153,9 @@ list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
         }
 
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
+        list.add(DataForSendToPrinterPos58.printAndFeedLine())
+        list.add(DataForSendToPrinterPos58.printAndFeedLine())
+
 
 
         val data = byteArrayOf(27, 109)
@@ -184,19 +188,22 @@ val phone = if (!customerPhone.isNullOrEmpty()) {
         "+91-$customerPhone"
     else customerPhone
 } else ""
-
+list.add(DataForSendToPrinterPos80.selectCharacterSize(18))  
 list.add("$phone\n".encodeToByteArray())
+list.add(DataForSendToPrinterPos80.selectCharacterSize(0))   
 
  // --- Customer Name (Same look as 58mm version) ---
 list.add(DataForSendToPrinterPos80.selectCharacterSize(18))  
 list.add(DataForSendToPrinterPos80.selectAlignment(1))        
-list.add("Name: $customerName\n".encodeToByteArray())
+list.add(" $customerName\n".encodeToByteArray())
 list.add(DataForSendToPrinterPos80.selectCharacterSize(0))   
 
 
     list.add(DataForSendToPrinterPos80.initializePrinter())
     list.add(DataForSendToPrinterPos80.selectCharacterSize(1))
-    list.add("--------------------------------".encodeToByteArray())
+            list.add(DataForSendToPrinterPos58.printAndFeedLine())
+
+
 
     // QR Code
     if (qrCodeText != null) {
@@ -318,10 +325,11 @@ list.add(DataForSendToPrinterPos80.selectCharacterSize(0))
     if (address != null) {
         list.add(DataForSendToPrinterPos80.initializePrinter())
         list.add(DataForSendToPrinterPos80.selectCharacterSize(2))
-        list.add(address.encodeToByteArray())
+    list.add(("  $address\n").encodeToByteArray())
         list.add(DataForSendToPrinterPos80.printAndFeedLine())
     }
 
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
     list.add(DataForSendToPrinterPos80.printAndFeedLine())
     list.add(DataForSendToPrinterPos80.printAndFeedLine())
 

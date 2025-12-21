@@ -69,26 +69,28 @@ class PrintableReceiptMain {
     this.customerNote,
   });
 
-  factory PrintableReceiptMain.fromJson(Map<String, dynamic> json) {
-    return PrintableReceiptMain(
-      datetime: json['datetime'] ?? '',
-      businessName: json['business_name'] ?? '',
-      items: (json['items'] as List? ?? [])
-          .map((e) => PrintableOrderItem.fromJson(e))
-          .toList(),
-      otherCharges: (json['other_charges'] as List? ?? [])
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList(),
-      orderTotal: (json['order_total'] ?? 0).toDouble(),
-      orderId: json['order_id'] ?? '',
-      printerId: json['printer_id'] ?? '',
-      customerPhone: json['customer_phone'] ?? '',
-      customerName: json['customer_name'] ?? '',
-      deliveryType: json['delivery_type'] ?? '',
-      address: json['address'] ?? '',
-      customerNote: json['customer_note'],
-    );
-  }
+ factory PrintableReceiptMain.fromJson(Map<String, dynamic> json) {
+  return PrintableReceiptMain(
+    datetime: json['datetime'] ?? '',
+    businessName: json['business_name'] ?? '',
+    items: (json['items'] as List? ?? [])
+        .map((e) => PrintableOrderItem.fromJson(e))
+        .toList(),
+
+    // ✅ FIXED HERE
+    otherCharges: parseOtherCharges(json),
+
+    orderTotal: (json['order_total'] ?? 0).toDouble() / 100,
+    orderId: json['order_id'] ?? '',
+    printerId: json['printer_id'] ?? '',
+    customerPhone: json['customer_phone'] ?? '',
+    customerName: json['customer_name'] ?? '',
+    deliveryType: json['delivery_type'] ?? '',
+    address: json['address'] ?? '',
+    customerNote: json['customer_note'],
+  );
+}
+
 
   Map<String, dynamic> toJson() {
     return {
@@ -155,4 +157,28 @@ Map<String, dynamic> toJson() {
 // ==================== Extension for Paisa to Rupee Conversion ====================
 extension ConvertPaisaToRupee on num? {
   double get paisaToRupee => this == null ? 0 : this! / 100;
+}
+
+
+
+List<Map<String, dynamic>> parseOtherCharges(Map<String, dynamic> json) {
+  final List<Map<String, dynamic>> charges = [];
+
+  void addCharge(String name, dynamic value) {
+    if (value == null) return;
+    if (value is num && value != 0) {
+      charges.add({
+        'name': name,
+        'value': value.toDouble() / 100, // paisa → rupee
+      });
+    }
+  }
+
+  addCharge('Delivery', json['delivery_charges']);
+  addCharge('Platform', json['platform_charge']);
+  addCharge('Other', json['other_charges']);
+  addCharge('Offer Discount', json['offer_discount']);
+  addCharge('Product Discount', json['product_discount']);
+
+  return charges;
 }

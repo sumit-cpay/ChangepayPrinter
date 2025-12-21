@@ -97,42 +97,71 @@ class CpayPrinterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware {
       return
     }
     logger("Initialising Bluetooth manager and adapter")
-    bluetoothManager = getSystemService(context, BluetoothManager::class.java)
-    bluetoothAdapter = bluetoothManager?.adapter
-    if (bluetoothAdapter == null) {
-      Toast.makeText(context, "Bluetooth adapter not found", Toast.LENGTH_SHORT).show()
-    } else if (!bluetoothAdapter!!.isEnabled) {
-      logger("Enabling bluetooth for connection with printer")
-      val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-      startActivityForResult(activity!!,  enableBtIntent, 1, null)
-    }
+   bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+
+if (bluetoothAdapter == null) {
+    Toast.makeText(context, "Bluetooth not supported", Toast.LENGTH_SHORT).show()
+    return
+}
+
+if (!bluetoothAdapter!!.isEnabled) {
+    val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+    activity?.startActivityForResult(enableBtIntent, 1)
+}
+
+
   }
 
   private fun getAllBluetoothPairedDevices(call: MethodCall, result: Result) {
-    if (bluetoothAdapter == null || bluetoothManager == null) {
-      return
+
+    val adapter = BluetoothAdapter.getDefaultAdapter()
+
+    if (adapter == null) {
+        result.success(emptyList<Map<String, Any>>())
+        return
     }
-    if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-      return
+
+    if (!adapter.isEnabled) {
+        result.error("BLUETOOTH_OFF", "Bluetooth is disabled", null)
+        return
     }
-    if (!bluetoothAdapter!!.isDiscovering) {
-      bluetoothAdapter!!.startDiscovery()
+
+    // Android 12+ permission ONLY
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.BLUETOOTH_CONNECT
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            result.error("PERMISSION", "BLUETOOTH_CONNECT denied", null)
+            return
+        }
     }
-    val allPairedDevices = bluetoothAdapter!!.bondedDevices
-    logger("all available paired devices: $allPairedDevices")
-    val bluetoothPrintersMap = mutableListOf<Map<String, Any>>()
-    for (device in allPairedDevices) {
-      val majorDeviceClass: Int = device.bluetoothClass.majorDeviceClass
-      val deviceClass: Int = device.bluetoothClass.deviceClass
-      logger("Device details Maj: $majorDeviceClass, Dev: $deviceClass")
-      if (majorDeviceClass == 1536 && (deviceClass == 1664 || deviceClass == 1536)) {
-        thermalPrinterDevices.add(device)
-        bluetoothPrintersMap.add(BluetoothPrinter(device.address, device.name).toJson())
-      }
-    }
-    logger("all thermal printers found $thermalPrinterDevices")
-    result.success(bluetoothPrintersMap)
-  }
+
+    val bondedDevices = adapter.bondedDevices
+    logger("Bonded devices count: ${bondedDevices.size}")
+
+    val printers = mutableListOf<Map<String, Any>>()
+
+   thermalPrinterDevices.clear()
+
+for (device in bondedDevices) {
+    logger("Found device: ${device.name} - ${device.address}")
+
+    thermalPrinterDevices.add(device) // ⭐ REQUIRED
+
+    printers.add(
+        BluetoothPrinter(
+            device.address,
+            device.name ?: "Unknown"
+        ).toJson()
+    )
+}
+
+
+    result.success(printers)
+}
+
 
   private fun connectToBluetoothPrinterByAddress(call: MethodCall, result: Result) {
     val address = call.argument<String>("bluetooth_printer_address")
