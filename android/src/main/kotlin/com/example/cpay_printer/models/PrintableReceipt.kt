@@ -168,6 +168,7 @@ public fun generatePrintableByteArrayForPaperWidth80(qrCodeText: String? = null)
     
     // Header
     list.add(DataForSendToPrinterPos80.initializePrinter())
+    
     list.add(DataForSendToPrinterPos80.selectAlignment(1))
     list.add(DataForSendToPrinterPos80.selectCharacterSize(18))
     list.add(orderId.encodeToByteArray())
@@ -262,6 +263,7 @@ list.add(DataForSendToPrinterPos80.selectCharacterSize(0))
     val priceStr = "%.2f".format(item.price).padStart(PRICE_WIDTH)
     val totalStr = "%.2f".format(item.total).padStart(TOTAL_WIDTH)
 
+    // ✅ First line (FULL COLUMNS LOCKED)
     val firstLine =
         nameLines[0].take(ITEM_NAME_WIDTH).padEnd(ITEM_NAME_WIDTH) +
         qtyStr +
@@ -271,6 +273,7 @@ list.add(DataForSendToPrinterPos80.selectCharacterSize(0))
 
     list.add(firstLine.encodeToByteArray())
 
+    // ✅ Wrapped lines (NAME ONLY, BUT WIDTH LOCKED)
     for (i in 1 until nameLines.size) {
         val wrapLine =
             nameLines[i].take(ITEM_NAME_WIDTH).padEnd(ITEM_NAME_WIDTH) +
@@ -282,8 +285,11 @@ list.add(DataForSendToPrinterPos80.selectCharacterSize(0))
 }
 
 
-    list.add("----------------------------------------".encodeToByteArray())
+    list.add("------------------------------------------------".encodeToByteArray())
+
     list.add(DataForSendToPrinterPos80.initializePrinter())
+ list.add(DataForSendToPrinterPos80.printAndFeedLine())
+
 
     // -----------------------------
     // Customer Note
@@ -303,9 +309,10 @@ list.add(DataForSendToPrinterPos80.selectCharacterSize(0))
     for (charge in otherCharges) {
         list.add(DataForSendToPrinterPos80.selectAlignment(2))
         list.add("${charge.name} ${charge.value}\n".encodeToByteArray())
+        list.add("--------------------------------".encodeToByteArray())
     }
 
-    list.add("------------------------------------------------".encodeToByteArray())
+
     list.add(DataForSendToPrinterPos80.printAndFeedLine())
     list.add(DataForSendToPrinterPos80.selectAlignment(2))
     list.add("Rs. ${orderTotal}".encodeToByteArray())
