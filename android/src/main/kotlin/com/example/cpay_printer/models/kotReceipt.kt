@@ -76,7 +76,7 @@ data class PrintableReceiptMain(
     list.add("--------------------------------\n".toByteArray())
 
     list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
-    list.add("Name: $customerName\n".toByteArray())
+    list.add(" $customerName\n".toByteArray())
     list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
     list.add("--------------------------------\n".toByteArray())
 
