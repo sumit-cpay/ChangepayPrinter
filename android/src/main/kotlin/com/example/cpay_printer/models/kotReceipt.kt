@@ -147,7 +147,11 @@ private fun formatItem58(item: CartItemReceipt): String {
 }
 
 
-
+fun leftMargin(dots: Int): ByteArray {
+    val nL = (dots and 0xFF).toByte()
+    val nH = ((dots shr 8) and 0xFF).toByte()
+    return byteArrayOf(0x1D, 0x4C, nL, nH)
+}
 
 
     // -------------------------------
@@ -156,6 +160,8 @@ private fun formatItem58(item: CartItemReceipt): String {
     fun generateMainReceipt80(): MutableList<ByteArray> {
         val list = mutableListOf<ByteArray>()
         list.add(DataForSendToPrinterPos58.initializePrinter())
+                  list.add(leftMargin(32)) 
+
         list.add(DataForSendToPrinterPos58.selectAlignment(1))
 
         list.add("********* MAIN RECEIPT (80mm) *********\n".toByteArray())
@@ -175,6 +181,7 @@ private fun formatItem58(item: CartItemReceipt): String {
             list.add("------------------------------------------\n".toByteArray())
         }
           list.add(DataForSendToPrinterPos58.selectAlignment(0))  // LEFT ALIGN
+
 
         list.add("Item                               Qty \n".toByteArray())
         list.add("------------------------------------------\n".toByteArray())
@@ -207,7 +214,7 @@ private fun formatItem58(item: CartItemReceipt): String {
     sb.append(qty)
     sb.append("\n")
 
-    // Wrapped lines — ✅ NO LEFT SPACE
+   
     for (i in 1 until lines.size) {
         sb.append(lines[i].take(NAME_WIDTH))
         sb.append("\n")
@@ -289,11 +296,17 @@ list.add(DataForSendToPrinterPos58.printAndFeedLine())  // only 1 line
 }
 
 
+fun leftMargin(dots: Int): ByteArray {
+    val nL = (dots and 0xFF).toByte()
+    val nH = ((dots shr 8) and 0xFF).toByte()
+    return byteArrayOf(0x1D, 0x4C, nL, nH)
+}
 
 
     fun generateKOT80(): MutableList<ByteArray> {
         val list = mutableListOf<ByteArray>()
         list.add(DataForSendToPrinterPos58.initializePrinter())
+        list.add(leftMargin(32)) 
         list.add("******* KOT: $categoryName *******\n".toByteArray())
         list.add("Order: $orderId\n".toByteArray())
         list.add("Time: $datetime\n\n".toByteArray())
