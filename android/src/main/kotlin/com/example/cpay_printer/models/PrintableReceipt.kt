@@ -28,6 +28,8 @@ class PrintableReceipt(
     val items: List<CartItem>,
     @SerializedName("order_id")
     val orderId: String,
+    @SerializedName("daily_token_number")
+val dailyTokenNumber: String?,
     @SerializedName("order_total")
     val orderTotal: Double,
     @SerializedName("other_charges")
