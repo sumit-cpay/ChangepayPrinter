@@ -41,6 +41,7 @@ class PrintableOrderItem {
 
 // ==================== Main Receipt ====================
 class PrintableReceiptMain {
+  final String dailyTokenNumber;
   final String datetime;
   final String businessName;
   final List<PrintableOrderItem> items;
@@ -55,6 +56,7 @@ class PrintableReceiptMain {
   final String? customerNote;
 
   PrintableReceiptMain({
+    required this.dailyTokenNumber,
     required this.datetime,
     required this.businessName,
     required this.items,
@@ -77,7 +79,7 @@ class PrintableReceiptMain {
         .map((e) => PrintableOrderItem.fromJson(e))
         .toList(),
 
-    // ✅ FIXED HERE
+     dailyTokenNumber: json['daily_token_number'].toString() ?? '',
     otherCharges: parseOtherCharges(json),
 
     orderTotal: (json['order_total'] ?? 0).toDouble() / 100,
@@ -94,6 +96,7 @@ class PrintableReceiptMain {
 
   Map<String, dynamic> toJson() {
     return {
+      'daily_token_number': dailyTokenNumber,
       'datetime': datetime,
       'business_name': businessName,
       'items': items.map((x) => x.toJson()).toList(),

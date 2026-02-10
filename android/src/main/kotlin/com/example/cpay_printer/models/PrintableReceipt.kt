@@ -48,9 +48,17 @@ class PrintableReceipt(
         val list: MutableList<ByteArray> = java.util.ArrayList()
         list.add(DataForSendToPrinterPos58.initializePrinter())
         list.add(DataForSendToPrinterPos58.selectAlignment(1))
-        list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
-        list.add(orderId.encodeToByteArray())
-        list.add(DataForSendToPrinterPos58.printAndFeedLine())
+      list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
+
+val displayOrderNo =
+    if (!dailyTokenNumber.isNullOrEmpty())
+        "$orderId-$dailyTokenNumber"
+    else
+        orderId
+
+list.add(displayOrderNo.encodeToByteArray())
+list.add(DataForSendToPrinterPos58.printAndFeedLine())
+
 
 list.add(byteArrayOf(0x1B, 0x21, 0x00))
         list.add(datetime.encodeToByteArray())
@@ -170,9 +178,17 @@ public fun generatePrintableByteArrayForPaperWidth80(qrCodeText: String? = null)
     list.add(DataForSendToPrinterPos80.initializePrinter())
     
     list.add(DataForSendToPrinterPos80.selectAlignment(1))
-    list.add(DataForSendToPrinterPos80.selectCharacterSize(18))
-    list.add(orderId.encodeToByteArray())
-    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+   list.add(DataForSendToPrinterPos80.selectCharacterSize(18))
+
+val displayOrderNo =
+    if (!dailyTokenNumber.isNullOrEmpty())
+        "$orderId-$dailyTokenNumber"
+    else
+        orderId
+
+list.add(displayOrderNo.encodeToByteArray())
+list.add(DataForSendToPrinterPos80.printAndFeedLine())
+
 
     list.add(DataForSendToPrinterPos80.selectCharacterSize(1))
     list.add(datetime.encodeToByteArray())
