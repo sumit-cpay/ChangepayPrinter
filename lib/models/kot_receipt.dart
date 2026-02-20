@@ -54,8 +54,10 @@ class PrintableReceiptMain {
   final String deliveryType;
   final String address;
   final String? customerNote;
+  final int? tableNumber;
 
   PrintableReceiptMain({
+    this.tableNumber,
     required this.dailyTokenNumber,
     required this.datetime,
     required this.businessName,
@@ -81,6 +83,7 @@ class PrintableReceiptMain {
 
      dailyTokenNumber: json['daily_token_number'].toString() ?? '',
     otherCharges: parseOtherCharges(json),
+    tableNumber: json['table_number'] as int? ?? 0,
 
     orderTotal: (json['order_total'] ?? 0).toDouble() / 100,
     orderId: json['order_id'] ?? '',
@@ -96,6 +99,8 @@ class PrintableReceiptMain {
 
   Map<String, dynamic> toJson() {
     return {
+
+      'table_number': tableNumber,
       'daily_token_number': dailyTokenNumber,
       'datetime': datetime,
       'business_name': businessName,

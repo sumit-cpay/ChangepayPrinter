@@ -30,6 +30,8 @@ class PrintableReceipt(
     val orderId: String,
     @SerializedName("daily_token_number")
 val dailyTokenNumber: String?,
+  @SerializedName("table_number")
+    val tableNumber: Int?, 
     @SerializedName("order_total")
     val orderTotal: Double,
     @SerializedName("other_charges")
@@ -93,7 +95,14 @@ list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
 list.add(DataForSendToPrinterPos58.selectCharacterSize(18))   
 list.add(DataForSendToPrinterPos58.selectAlignment(1))       
 list.add("$customerName\n".encodeToByteArray())
-list.add(DataForSendToPrinterPos58.selectCharacterSize(0))    
+list.add(DataForSendToPrinterPos58.selectCharacterSize(0))   
+if (tableNumber != null && tableNumber > 0) {
+    list.add(DataForSendToPrinterPos58.selectAlignment(1))
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
+    list.add("Table No: $tableNumber\n".encodeToByteArray())
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
+}
+
 
 
         list.add(DataForSendToPrinterPos58.initializePrinter())
@@ -215,7 +224,13 @@ list.add(DataForSendToPrinterPos80.selectCharacterSize(0))
 list.add(DataForSendToPrinterPos80.selectCharacterSize(18))  
 list.add(DataForSendToPrinterPos80.selectAlignment(1))        
 list.add(" $customerName\n".encodeToByteArray())
-list.add(DataForSendToPrinterPos80.selectCharacterSize(0))   
+list.add(DataForSendToPrinterPos80.selectCharacterSize(0))  
+if (tableNumber != null && tableNumber > 0) {
+    list.add(DataForSendToPrinterPos58.selectAlignment(1))
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
+    list.add("Table No: $tableNumber\n".encodeToByteArray())
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
+} 
 
 
     list.add(DataForSendToPrinterPos80.initializePrinter())

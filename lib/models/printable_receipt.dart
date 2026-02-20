@@ -76,7 +76,9 @@ class PrintableReceipt {
   final String orderLongId;
   final String encrQrString;
   final String? customerNote;
+  final int? tableNumber; 
   PrintableReceipt({
+      this.tableNumber,
     required this.dailyTokenNumber,
     required this.dateTime,
     required this.customerPhone,
@@ -97,6 +99,7 @@ class PrintableReceipt {
   factory PrintableReceipt.fromJson(Map<String, dynamic> json) {
     return PrintableReceipt(
       dailyTokenNumber: json['daily_token_number'].toString() ?? '',
+      tableNumber: json['table_number'] as int? ?? 0,
       orderLongId: json['order_long_id'] ?? '',
       dateTime: json['datetime'] ?? '-',
       address: json['address'] ?? '-',
@@ -126,6 +129,7 @@ class PrintableReceipt {
   Map<String, dynamic> toJson() {
     return {
         'daily_token_number': dailyTokenNumber,
+        tableNumber != null ? 'table_number' : '': tableNumber,
       'datetime': dateTime,
       'address': address,
       'delivery_type': deliveryType,

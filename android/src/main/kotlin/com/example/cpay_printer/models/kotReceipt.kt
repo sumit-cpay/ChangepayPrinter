@@ -42,6 +42,8 @@ data class CartItemReceipt(
 // MAIN RECEIPT
 // =========================
 data class PrintableReceiptMain(
+        val tableNumber: Int? = null,   
+
     val orderId: String = "",
     val datetime: String = "",
     val businessName: String = "",
@@ -78,6 +80,12 @@ data class PrintableReceiptMain(
     list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
     list.add(" $customerName\n".toByteArray())
     list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
+      if (tableNumber != null && tableNumber > 0) {
+    list.add(DataForSendToPrinterPos58.selectAlignment(1))
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
+    list.add("Table No: $tableNumber\n".toByteArray())
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
+}
     list.add("--------------------------------\n".toByteArray())
 
     if (!customerNote.isNullOrEmpty()) {
@@ -174,6 +182,12 @@ fun leftMargin(dots: Int): ByteArray {
                 list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
         list.add(" $customerName\n".toByteArray())
                 list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
+                if (tableNumber != null && tableNumber > 0) {
+    list.add(DataForSendToPrinterPos58.selectAlignment(1))
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
+    list.add("Table No: $tableNumber\n".toByteArray())
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
+}
 
        list.add("-------------------------------------------\n".toByteArray())
         if (!customerNote.isNullOrEmpty()) {
