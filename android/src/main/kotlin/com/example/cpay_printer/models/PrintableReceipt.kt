@@ -83,12 +83,14 @@ val phone = if (!customerPhone.isNullOrEmpty()) {
         "+91-$customerPhone"
     else customerPhone
 } else ""
-list.add(DataForSendToPrinterPos58.selectAlignment(1))    
-list.add(DataForSendToPrinterPos58.selectCharacterSize(18))     
-list.add(byteArrayOf(0x1B, 0x45, 0x01))
-list.add("$phone\n".encodeToByteArray())
-list.add(byteArrayOf(0x1B, 0x45, 0x00))
-list.add(DataForSendToPrinterPos58.selectCharacterSize(0))    
+if (deliveryType != "DINE_IN") {
+    list.add(DataForSendToPrinterPos58.selectAlignment(1))    
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(18))     
+    list.add(byteArrayOf(0x1B, 0x45, 0x01))
+    list.add("$phone\n".encodeToByteArray())
+    list.add(byteArrayOf(0x1B, 0x45, 0x00))
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(0))    
+}  
 
 
 // --- Customer Name (Same as your first receipt class) ---
@@ -111,7 +113,10 @@ if (tableNumber != null && tableNumber > 0) {
         list.add("--------------------------------".encodeToByteArray())
 
 
-        if (qrCodeText != null) {
+        if (   qrCodeText != null &&
+    deliveryType != "DINE_IN" &&
+    deliveryType != "TAKE_AWAY" &&
+    deliveryType != "BILL_PAYMENT") {
             list.add(DataForSendToPrinterPos58.initializePrinter())
             list.add(DataForSendToPrinterPos58.printAndFeedLine())
             list.add(DataForSendToPrinterPos58.printAndFeedLine())
@@ -216,10 +221,11 @@ val phone = if (!customerPhone.isNullOrEmpty()) {
         "+91-$customerPhone"
     else customerPhone
 } else ""
+if (deliveryType != "DINE_IN") {
 list.add(DataForSendToPrinterPos80.selectCharacterSize(18))  
 list.add("$phone\n".encodeToByteArray())
 list.add(DataForSendToPrinterPos80.selectCharacterSize(0))   
-
+}
  // --- Customer Name (Same look as 58mm version) ---
 list.add(DataForSendToPrinterPos80.selectCharacterSize(18))  
 list.add(DataForSendToPrinterPos80.selectAlignment(1))        
@@ -240,7 +246,10 @@ if (tableNumber != null && tableNumber > 0) {
 
 
     // QR Code
-    if (qrCodeText != null) {
+    if (   qrCodeText != null &&
+    deliveryType != "DINE_IN" &&
+    deliveryType != "TAKE_AWAY" &&
+    deliveryType != "BILL_PAYMENT" ) {
         list.add(DataForSendToPrinterPos80.initializePrinter())
         list.add(DataForSendToPrinterPos80.selectAlignment(1))
         list.add(qrCodeDataToByteArray(qrCodeText, 250)!!)
