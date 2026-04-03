@@ -83,7 +83,7 @@ val phone = if (!customerPhone.isNullOrEmpty()) {
         "+91-$customerPhone"
     else customerPhone
 } else ""
-if (deliveryType != "DINE_IN") {
+if (deliveryType != "DINE IN") {
     list.add(DataForSendToPrinterPos58.selectAlignment(1))    
     list.add(DataForSendToPrinterPos58.selectCharacterSize(18))     
     list.add(byteArrayOf(0x1B, 0x45, 0x01))
@@ -113,9 +113,9 @@ if (tableNumber != null && tableNumber > 0) {
         list.add("--------------------------------".encodeToByteArray())
 
 
-        if (   qrCodeText != null &&
-    deliveryType != "DINE_IN" &&
-    deliveryType != "TAKE_AWAY" &&
+        if (      qrCodeText != null &&
+    deliveryType != "DINE IN" &&
+    deliveryType != "SELF PICK UP" &&
     deliveryType != "BILL_PAYMENT") {
             list.add(DataForSendToPrinterPos58.initializePrinter())
             list.add(DataForSendToPrinterPos58.printAndFeedLine())
@@ -221,7 +221,7 @@ val phone = if (!customerPhone.isNullOrEmpty()) {
         "+91-$customerPhone"
     else customerPhone
 } else ""
-if (deliveryType != "DINE_IN") {
+if (deliveryType != "DINE IN") {
 list.add(DataForSendToPrinterPos80.selectCharacterSize(18))  
 list.add("$phone\n".encodeToByteArray())
 list.add(DataForSendToPrinterPos80.selectCharacterSize(0))   
@@ -247,8 +247,8 @@ if (tableNumber != null && tableNumber > 0) {
 
     // QR Code
     if (   qrCodeText != null &&
-    deliveryType != "DINE_IN" &&
-    deliveryType != "TAKE_AWAY" &&
+    deliveryType != "DINE IN" &&
+    deliveryType != "SELF PICK UP" &&
     deliveryType != "BILL_PAYMENT" ) {
         list.add(DataForSendToPrinterPos80.initializePrinter())
         list.add(DataForSendToPrinterPos80.selectAlignment(1))
