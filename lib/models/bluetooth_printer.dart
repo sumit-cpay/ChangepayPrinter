@@ -51,7 +51,7 @@ class BluetoothPrinter {
       return false;
     }
   }
-
+  
   Future<bool> printReceipt(
     PrintableReceipt receipt, {
     String? qrCodeText,
@@ -100,6 +100,12 @@ class BluetoothPrinter {
           'price': item.price,
           'total': item.total,
           'category': item.category,
+          "addons": item.addons!
+              .map((a) => {
+                    "name": a.name,
+                    "price": a.price,
+                  })
+              .toList(),
         };
       }).toList(),
      'otherCharges': kotReceiptV2.main.otherCharges.map((e) => {
@@ -115,11 +121,18 @@ class BluetoothPrinter {
     kotReceiptV2.kotSections.forEach((key, items) {
       kotSectionsMap[key] = items.map((item) {
         return {
-          'name': item.name,
-          'quantity': item.quantity,
-          'price': item.price,
-          'total': item.total,
-          'category': item.category,
+         "name": item.name,
+          "quantity": item.quantity,
+          "price": item.price,
+          "total": item.total,
+          "category": item.category,
+
+          "addons": item.addons!
+              .map((a) => {
+                    "name": a.name,
+                    "price": a.price,
+                  })
+              .toList(),
         };
       }).toList();
     });

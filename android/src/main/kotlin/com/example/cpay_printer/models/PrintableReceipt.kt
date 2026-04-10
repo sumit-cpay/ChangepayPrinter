@@ -48,6 +48,27 @@ val dailyTokenNumber: String?,
     val customerNote: String?,
     ) {
 
+
+
+         // Helper to wrap long item names
+    // -----------------------------
+    fun wrapText(text: String, width: Int): List<String> {
+        if (text.isEmpty()) return listOf("")
+        val words = text.split(" ")
+        val lines = mutableListOf<String>()
+        var current = StringBuilder()
+        for (word in words) {
+            if (current.isEmpty()) current.append(word)
+            else if (current.length + 1 + word.length <= width) current.append(" ").append(word)
+            else {
+                lines.add(current.toString())
+                current = StringBuilder(word)
+            }
+        }
+        if (current.isNotEmpty()) lines.add(current.toString())
+        return lines
+    }
+
     public fun generatePrintableByteArrayForPaperWidth58(qrCodeText: String? = null): MutableList<ByteArray> {
         val list: MutableList<ByteArray> = java.util.ArrayList()
         list.add(DataForSendToPrinterPos58.initializePrinter())
@@ -110,33 +131,53 @@ if (tableNumber != null && tableNumber > 0) {
         list.add(DataForSendToPrinterPos58.initializePrinter())
         list.add(DataForSendToPrinterPos58.selectCharacterSize(1))
 
-        list.add("--------------------------------".encodeToByteArray())
 
 
         if (      qrCodeText != null &&
     deliveryType != "DINE IN" &&
     deliveryType != "SELF PICK UP" &&
     deliveryType != "BILL_PAYMENT") {
+        list.add("--------------------------------".encodeToByteArray())
+
             list.add(DataForSendToPrinterPos58.initializePrinter())
-            list.add(DataForSendToPrinterPos58.printAndFeedLine())
             list.add(DataForSendToPrinterPos58.printAndFeedLine())
             list.add(DataForSendToPrinterPos58.selectAlignment(1))
             list.add(qrCodeDataToByteArray(qrCodeText, 250)!!)
             list.add(DataForSendToPrinterPos58.printAndFeedLine())
-            list.add(DataForSendToPrinterPos58.printAndFeedLine())
+        list.add("--------------------------------".encodeToByteArray())
 
         }
+       list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
 
-        list.add("--------------------------------".encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
-        list.add("Items      Qty    Price   Total  ".encodeToByteArray())
-        list.add("-------------------------------".encodeToByteArray())
+      //  list.add("Items      Qty    Price   Total  ".encodeToByteArray())
+      list.add("Items               Qty    Total".encodeToByteArray())
+        list.add("--------------------------------".encodeToByteArray())
 
         list.add(DataForSendToPrinterPos58.initializePrinter())
 
-        for (item in items) {
-            list.add(addOrderItemToPrintableString(item).encodeToByteArray())
-        }
+       for (item in items) {
+    list.add(byteArrayOf(0x1B, 0x45, 0x01))
+
+    
+    list.add(addOrderItemToPrintableString(item).encodeToByteArray())
+        list.add(byteArrayOf(0x1B, 0x45, 0x00))
+
+
+    
+    item.addons?.forEach { addon ->
+        val addonText =
+            if (addon.price != null && addon.price > 0)
+                "   + ${addon.name} (${addon.price})\n"
+            else
+                "   + ${addon.name}\n"
+
+        list.add(addonText.encodeToByteArray())
+    }
+
+   
+    list.add("--------------------------------\n".encodeToByteArray())
+}
 
         list.add(DataForSendToPrinterPos58.initializePrinter())
         list.add(DataForSendToPrinterPos58.selectAlignment(2))
@@ -172,14 +213,15 @@ if (tableNumber != null && tableNumber > 0) {
         if (address != null) {
             list.add(DataForSendToPrinterPos58.initializePrinter())
             list.add(DataForSendToPrinterPos58.selectCharacterSize(2))
-            list.add(address.encodeToByteArray())
+              val addressLines = wrapText(address, 32)
+
+    for (line in addressLines) {
+        list.add((line + "\n").encodeToByteArray())
+    }
             list.add(DataForSendToPrinterPos58.printAndFeedLine())
         }
 
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
-        list.add(DataForSendToPrinterPos58.printAndFeedLine())
-        list.add(DataForSendToPrinterPos58.printAndFeedLine())
-
 
 
         val data = byteArrayOf(27, 109)
@@ -191,7 +233,6 @@ public fun generatePrintableByteArrayForPaperWidth80(qrCodeText: String? = null)
     val list: MutableList<ByteArray> = java.util.ArrayList()
     
     // Header
-    list.add(DataForSendToPrinterPos80.initializePrinter())
     
     list.add(DataForSendToPrinterPos80.selectAlignment(1))
    list.add(DataForSendToPrinterPos80.selectCharacterSize(18))
@@ -210,7 +251,7 @@ list.add(DataForSendToPrinterPos80.printAndFeedLine())
     list.add(datetime.encodeToByteArray())
     list.add(DataForSendToPrinterPos80.printAndFeedLine())
 
-    list.add(DataForSendToPrinterPos58.selectCharacterSize(1))
+    list.add(DataForSendToPrinterPos80.selectCharacterSize(1))
     list.add(businessName.encodeToByteArray())
     list.add(DataForSendToPrinterPos80.printAndFeedLine())
 
@@ -240,8 +281,8 @@ if (tableNumber != null && tableNumber > 0) {
 
 
     list.add(DataForSendToPrinterPos80.initializePrinter())
-    list.add(DataForSendToPrinterPos80.selectCharacterSize(1))
-            list.add(DataForSendToPrinterPos58.printAndFeedLine())
+    list.add(DataForSendToPrinterPos80.selectCharacterSize(0))
+            list.add(DataForSendToPrinterPos80.printAndFeedLine())
 
 
 
@@ -275,24 +316,7 @@ if (tableNumber != null && tableNumber > 0) {
     list.add("------------------------------------------------".encodeToByteArray())
 
     // -----------------------------
-    // Helper to wrap long item names
-    // -----------------------------
-    fun wrapText(text: String, width: Int): List<String> {
-        if (text.isEmpty()) return listOf("")
-        val words = text.split(" ")
-        val lines = mutableListOf<String>()
-        var current = StringBuilder()
-        for (word in words) {
-            if (current.isEmpty()) current.append(word)
-            else if (current.length + 1 + word.length <= width) current.append(" ").append(word)
-            else {
-                lines.add(current.toString())
-                current = StringBuilder(word)
-            }
-        }
-        if (current.isNotEmpty()) lines.add(current.toString())
-        return lines
-    }
+   
 
     // -----------------------------
     // Add items (responsive)
@@ -305,17 +329,18 @@ if (tableNumber != null && tableNumber > 0) {
     val priceStr = "%.2f".format(item.price).padStart(PRICE_WIDTH)
     val totalStr = "%.2f".format(item.total).padStart(TOTAL_WIDTH)
 
-    // ✅ First line (FULL COLUMNS LOCKED)
+    
     val firstLine =
         nameLines[0].take(ITEM_NAME_WIDTH).padEnd(ITEM_NAME_WIDTH) +
         qtyStr +
         priceStr +
         totalStr +
         "\n"
+list.add(byteArrayOf(0x1B, 0x45, 0x01))
 
     list.add(firstLine.encodeToByteArray())
-
-    // ✅ Wrapped lines (NAME ONLY, BUT WIDTH LOCKED)
+list.add(byteArrayOf(0x1B, 0x45, 0x00))
+   
     for (i in 1 until nameLines.size) {
         val wrapLine =
             nameLines[i].take(ITEM_NAME_WIDTH).padEnd(ITEM_NAME_WIDTH) +
@@ -324,10 +349,27 @@ if (tableNumber != null && tableNumber > 0) {
 
         list.add(wrapLine.encodeToByteArray())
     }
+  item.addons?.forEach { addon ->
+
+    val addonText =
+        if (addon.price != null && addon.price > 0)
+            "+ ${addon.name} (${addon.price})"
+        else
+            "+ ${addon.name}"
+
+    val safeAddon = addonText.take(ITEM_NAME_WIDTH)
+
+    val line =
+        safeAddon.padEnd(ITEM_NAME_WIDTH) + // ONLY NAME COLUMN FILLED
+        " ".repeat(QTY_WIDTH + PRICE_WIDTH + TOTAL_WIDTH) + "\n"
+
+    list.add(line.encodeToByteArray())
+}
+ list.add("------------------------------------------------".encodeToByteArray())
+
 }
 
 
-    list.add("------------------------------------------------".encodeToByteArray())
 
     list.add(DataForSendToPrinterPos80.initializePrinter())
  list.add(DataForSendToPrinterPos80.printAndFeedLine())
@@ -351,7 +393,7 @@ if (tableNumber != null && tableNumber > 0) {
     for (charge in otherCharges) {
         list.add(DataForSendToPrinterPos80.selectAlignment(2))
         list.add("${charge.name} ${charge.value}\n".encodeToByteArray())
-        list.add("--------------------------------".encodeToByteArray())
+         list.add("------------------------------------------------".encodeToByteArray())
     }
 
 
@@ -374,13 +416,15 @@ if (tableNumber != null && tableNumber > 0) {
     if (address != null) {
         list.add(DataForSendToPrinterPos80.initializePrinter())
         list.add(DataForSendToPrinterPos80.selectCharacterSize(2))
-    list.add(("  $address\n").encodeToByteArray())
-        list.add(DataForSendToPrinterPos80.printAndFeedLine())
-    }
+val addressLines = wrapText(address, 48)
 
-    list.add(DataForSendToPrinterPos80.printAndFeedLine())
-    list.add(DataForSendToPrinterPos80.printAndFeedLine())
-    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+    for (line in addressLines) {
+        list.add((line + "\n").encodeToByteArray())
+    }
+        }
+
+ 
+
 
     list.add(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
 
@@ -460,19 +504,19 @@ if (tableNumber != null && tableNumber > 0) {
         return imageBytes
     }
  fun addOrderItemToPrintableString(orderItem: CartItem): String {
-    val ITEM_NAME_WIDTH = 12
-    val ITEM_QTY_WIDTH = 6
-    val ITEM_PRICE_WIDTH = 7
+    val ITEM_NAME_WIDTH = 20
+    val ITEM_QTY_WIDTH = 5
+   // val ITEM_PRICE_WIDTH = 7
     val ITEM_TOTAL_WIDTH = 7
 
-    val startIndexed = mutableListOf(0, 0, 0, 0)
+    val startIndexed = mutableListOf(0, 0, 0)
     var printableOrderItemString = ""
 
     while (true) {
         if (startIndexed[0] == orderItem.name.length &&
             startIndexed[1] == orderItem.quantity.toString().length &&
-            startIndexed[2] == orderItem.price.toString().length &&
-            startIndexed[3] == orderItem.total.toString().length
+        //    startIndexed[2] == orderItem.price.toString().length &&
+            startIndexed[2] == orderItem.total.toString().length
         ) break
 
         // ---- NAME ----
@@ -488,15 +532,19 @@ if (tableNumber != null && tableNumber > 0) {
         printableOrderItemString += quantity + " ".repeat(ITEM_QTY_WIDTH - quantity.length)
 
         // ---- PRICE ----
-        val endIndex3 = min(startIndexed[2] + ITEM_PRICE_WIDTH - 1, orderItem.price.toString().length)
-        val price = orderItem.price.toString().substring(startIndexed[2], endIndex3)
-        startIndexed[2] = endIndex3
-        printableOrderItemString += price + " ".repeat(ITEM_PRICE_WIDTH - price.length)
+      //  val endIndex3 = min(startIndexed[2] + ITEM_PRICE_WIDTH - 1, orderItem.price.toString().length)
+      //  val price = orderItem.price.toString().substring(startIndexed[2], endIndex3)
+      //  startIndexed[2] = endIndex3
+     //   printableOrderItemString += price + " ".repeat(ITEM_PRICE_WIDTH - price.length)
 
         // ---- TOTAL (CENTER aligned) ----
-        val endIndex4 = min(startIndexed[3] + ITEM_TOTAL_WIDTH - 1, orderItem.total.toString().length)
-        val total = orderItem.total.toString().substring(startIndexed[3], endIndex4)
-        startIndexed[3] = endIndex4
+     //   val endIndex4 = min(startIndexed[3] + ITEM_TOTAL_WIDTH - 1, orderItem.total.toString().length)
+     //   val total = orderItem.total.toString().substring(startIndexed[3], endIndex4)
+      //  startIndexed[3] = endIndex4
+
+      val endIndex3 = min(startIndexed[2] + ITEM_TOTAL_WIDTH - 1, orderItem.total.toString().length)
+val total = orderItem.total.toString().substring(startIndexed[2], endIndex3)
+startIndexed[2] = endIndex3
 
         val spaceLeft = (ITEM_TOTAL_WIDTH - total.length) / 2
         val spaceRight = ITEM_TOTAL_WIDTH - total.length - spaceLeft
@@ -506,7 +554,6 @@ if (tableNumber != null && tableNumber > 0) {
         printableOrderItemString += '\n'
     }
 
-    printableOrderItemString += "--------------------------------"
     return printableOrderItemString
 }
 
@@ -520,7 +567,9 @@ data class CartItem(
     @SerializedName("quantity")
     val quantity: Int,
     @SerializedName("total")
-    val total: Double
+    val total: Double,
+    @SerializedName("addons")
+    val addons: List<Addon>? = emptyList()
 )
 
 data class OtherCharge(
@@ -528,4 +577,13 @@ data class OtherCharge(
     val name: String,
     @SerializedName("value")
     val value: Double,
+)
+
+
+data class Addon(
+    @SerializedName("name")
+    val name: String,
+
+    @SerializedName("price")
+    val price: Double?
 )

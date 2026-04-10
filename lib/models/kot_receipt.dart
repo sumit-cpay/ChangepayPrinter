@@ -1,20 +1,21 @@
 // printable_models.dart
 
 // ==================== Order Item ====================
+import 'package:cpay_printer/models/printable_receipt.dart';
+
 class PrintableOrderItem {
   final String name;
   final int quantity;
   final double price;
   final double total;
   final String? category; // e.g., Juice, Chinese, Main Course
-  final List<dynamic>? addons;
-
+final List<PrintableAddon>? addons;
   PrintableOrderItem({
     required this.name,
     required this.quantity,
     required this.price,
     required this.total,
-    this.category,
+    this.category,  
     this.addons,
   });
 
@@ -25,7 +26,11 @@ class PrintableOrderItem {
       price: (json['price'] ?? 0).toDouble(),
       total: (json['total'] ?? 0).toDouble(),
       category: json['category'] as String?,
-      addons: json['addons'] as List<dynamic>?,
+      addons: json['addons'] == null
+          ? null
+          : (json['addons'] as List)
+              .map((e) => PrintableAddon.fromJson(e))
+              .toList(),
     );
   }
 

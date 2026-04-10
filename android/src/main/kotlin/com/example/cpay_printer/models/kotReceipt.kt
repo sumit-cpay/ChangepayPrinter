@@ -8,8 +8,10 @@ import kotlin.math.min
 // =========================
 // Printer formatting helpers
 // =========================
-fun boldOn(): ByteArray = byteArrayOf(0x1B, 0x45, 0x01)
-fun boldOff(): ByteArray = byteArrayOf(0x1B, 0x45, 0x00)
+object PrinterUtils {
+    fun boldOn(): ByteArray = byteArrayOf(0x1B, 0x45, 0x01)
+    fun boldOff(): ByteArray = byteArrayOf(0x1B, 0x45, 0x00)
+}
 
 
 private fun wrapText(text: String, width: Int): List<String> {
@@ -35,7 +37,8 @@ data class CartItemReceipt(
     val name: String = "",
     val quantity: Int = 0,
     val total: Double = 0.0,
-    val category: String? = null
+    val category: String? = null,
+    val addons: List<Addon>? = emptyList()
 )
 
 // =========================
@@ -104,11 +107,27 @@ list.add(DataForSendToPrinterPos58.selectAlignment(0))  // <<< FIX
     list.add("--------------------------------\n".toByteArray())
 
     // ---------- ITEMS ----------
-    items.forEach {
-        list.add(formatItem58(it).toByteArray())
+   items.forEach { item ->
+
+    // ITEM
+    list.add(PrinterUtils.boldOn())
+    list.add(formatItem58(item).toByteArray())
+    list.add(PrinterUtils.boldOff())
+
+    // ADDONS
+    item.addons?.forEach { addon ->
+        val text =
+            if (addon.price != null && addon.price > 0)
+                "  + ${addon.name} (${addon.price})\n"
+            else
+                "  + ${addon.name}\n"
+
+        list.add(text.toByteArray())
     }
 
+    // SEPARATOR AFTER FULL BLOCK
     list.add("--------------------------------\n".toByteArray())
+}
 
     // ---------- CHARGES ----------
     otherCharges.forEach { (name, amount) ->
@@ -168,7 +187,8 @@ fun leftMargin(dots: Int): ByteArray {
     fun generateMainReceipt80(): MutableList<ByteArray> {
         val list = mutableListOf<ByteArray>()
         list.add(DataForSendToPrinterPos58.initializePrinter())
-                  list.add(leftMargin(32)) 
+                          list.add(leftMargin(32)) 
+
 
         list.add(DataForSendToPrinterPos58.selectAlignment(1))
 
@@ -196,16 +216,34 @@ fun leftMargin(dots: Int): ByteArray {
         }
           list.add(DataForSendToPrinterPos58.selectAlignment(0))  // LEFT ALIGN
 
+                 list.add(PrinterUtils.boldOn())
 
         list.add("Item                               Qty \n".toByteArray())
-        list.add("------------------------------------------\n".toByteArray())
-
-        items.forEach { list.add(formatItem80(it).toByteArray()) }
+                list.add(PrinterUtils.boldOff())
 
         list.add("------------------------------------------\n".toByteArray())
+             items.forEach { item ->
+
+    list.add(PrinterUtils.boldOn())
+    list.add(formatItem80(item).toByteArray())
+    list.add(PrinterUtils.boldOff())
+
+    item.addons?.forEach { addon ->
+        val text =
+            if (addon.price != null && addon.price > 0)
+                "  + ${addon.name} (${addon.price})\n"
+            else
+                "  + ${addon.name}\n"
+
+        list.add(text.toByteArray())
+    }
+
+    list.add("------------------------------------------\n".toByteArray())
+}
+
         otherCharges.forEach { (name, amount) -> list.add("$name: ${formatMoney(amount)}\n".toByteArray()) }
 
-        repeat(3) { list.add(DataForSendToPrinterPos58.printAndFeedLine()) }
+        repeat(2) { list.add(DataForSendToPrinterPos58.printAndFeedLine()) }
         list.add(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
         return list
     }
@@ -270,14 +308,26 @@ data class KOTPrintableReceipt(
             list.add("--------------------------------\n".toByteArray())
         }
 
-        list.add(boldOn())
+        list.add(PrinterUtils.boldOn())
+
         list.add("Item                       Qty\n".toByteArray())
-        list.add(boldOff())
+       list.add(PrinterUtils.boldOff())
 
         list.add("--------------------------------\n".toByteArray())
-        list.add(boldOn())
-        items.forEach { list.add(formatItem58(it).toByteArray()) }
-   list.add(boldOff())
+
+items.forEach { item ->
+        list.add(PrinterUtils.boldOn())
+
+    list.add(formatItem58(item).toByteArray())
+   list.add(PrinterUtils.boldOff())
+
+    item.addons?.forEach { addon ->
+        val text = "  + ${addon.name}\n"   // KOT usually no price
+        list.add(text.toByteArray())
+    }
+        list.add("--------------------------------\n".toByteArray())
+
+}
 list.add(DataForSendToPrinterPos58.printAndFeedLine())  // only 1 line
         list.add(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
         return list
@@ -320,21 +370,33 @@ fun leftMargin(dots: Int): ByteArray {
     fun generateKOT80(): MutableList<ByteArray> {
         val list = mutableListOf<ByteArray>()
         list.add(DataForSendToPrinterPos58.initializePrinter())
-        list.add(leftMargin(32)) 
         list.add("******* KOT: $categoryName *******\n".toByteArray())
         list.add("Order: $orderId\n".toByteArray())
-        list.add("Time: $datetime\n\n".toByteArray())
+        list.add("Time: $datetime\n".toByteArray())
 
-        if (!customerNote.isNullOrEmpty()) list.add("NOTE: $customerNote\n\n".toByteArray())
+        if (!customerNote.isNullOrEmpty()) list.add("NOTE: $customerNote\n".toByteArray())
 
-        list.add(boldOn())
+        list.add(PrinterUtils.boldOn())
+
         list.add("Item                              Qty\n".toByteArray())
-        list.add(boldOff())
+        list.add(PrinterUtils.boldOff())
 
         list.add("------------------------------------------\n".toByteArray())
-        items.forEach { list.add(formatItem80(it).toByteArray()) }
 
-list.add(DataForSendToPrinterPos58.printAndFeedLine())  // only 1 line
+        items.forEach { item ->
+        list.add(PrinterUtils.boldOn())
+
+    list.add(formatItem80(item).toByteArray())
+        list.add(PrinterUtils.boldOff())
+
+    item.addons?.forEach { addon ->
+        val text = "  + ${addon.name}\n"
+        list.add(text.toByteArray())
+    }
+        list.add("------------------------------------------\n".toByteArray())
+
+}
+
         list.add(byteArrayOf(0x1D, 0x56, 0x42, 0x00))
         return list
     }

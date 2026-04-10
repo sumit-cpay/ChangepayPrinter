@@ -28,11 +28,14 @@ class PrintableOrderItems {
   final double total;
   final int quantity;
   final double price;
+    final List<PrintableAddon> addons;
+
   PrintableOrderItems({
     required this.name,
     required this.total,
     required this.quantity,
     required this.price,
+    this.addons = const [],
   });
 
   factory PrintableOrderItems.fromJson(Map<String, dynamic> json) {
@@ -40,12 +43,17 @@ class PrintableOrderItems {
         name: json['name'] ?? '-',
         total: (json['total'] ?? 0) * 1.00,
         quantity: json['quantity'] ?? 0,
-        price: (json['price'] ?? 0) * 1.00);
+        price: (json['price'] ?? 0) * 1.00,
+        addons: json['addons'] == null
+            ? []
+            : (json['addons'] as List)
+                .map((e) => PrintableAddon.fromJson(e))
+                .toList());
   }
 
   @override
   String toString() {
-    return 'PrintableOrderItems(name: $name, total: $total, quantity: $quantity, price: $price)';
+    return 'PrintableOrderItems(name: $name, total: $total, quantity: $quantity, price: $price addons: $addons)';
   }
 
   Map<String, dynamic> toJson() {
@@ -54,6 +62,7 @@ class PrintableOrderItems {
       'total': total,
       'quantity': quantity,
       'price': price,
+      'addons': addons.map((x) => x.toJson()).toList(),
     };
   }
 }
@@ -150,4 +159,29 @@ class PrintableReceipt {
 
 extension ConvertPaisaToRupee on num? {
   double get paisaToRupee => this == null ? 0 : this! / 100;
+}
+
+
+class PrintableAddon {
+  final String name;
+  final double price;
+
+  PrintableAddon({
+    required this.name,
+    required this.price,
+  });
+
+  factory PrintableAddon.fromJson(Map<String, dynamic> json) {
+    return PrintableAddon(
+      name: json['name'] ?? '-',
+      price: (json['price'] ?? 0) * 1.00,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'price': price,
+    };
+  }
 }
