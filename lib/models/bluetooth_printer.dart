@@ -83,7 +83,7 @@ class BluetoothPrinter {
     // --- 1. Convert main receipt ---
     final Map<String, dynamic> mainMap = {
       // 'daily_token_number': kotReceiptV2.main.dailyTokenNumber,
-  'order_id':
+  'orderId':
       '${kotReceiptV2.main.orderId} - ${kotReceiptV2.main.dailyTokenNumber}',
             'datetime': kotReceiptV2.main.datetime,
               'table_number': kotReceiptV2.main.tableNumber,
