@@ -211,7 +211,7 @@ for (charge in filteredCharges) {
 
         list.add("--------------------------------".encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
-        list.add("Rs. ${"%.2f".format(finalTotal)}".encodeToByteArray())
+        list.add("Rs. ${orderTotal}".encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
         list.add("--------------------------------".encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
@@ -421,7 +421,7 @@ for (charge in filteredCharges) {
 
     list.add(DataForSendToPrinterPos80.printAndFeedLine())
     list.add(DataForSendToPrinterPos80.selectAlignment(2))
-    list.add("Rs. ${"%.2f".format(finalTotal)}".encodeToByteArray())
+    list.add("Rs. ${orderTotal}".encodeToByteArray())
     list.add(DataForSendToPrinterPos80.printAndFeedLine())
     list.add("--------------------------------".encodeToByteArray())
     list.add(DataForSendToPrinterPos80.printAndFeedLine())
