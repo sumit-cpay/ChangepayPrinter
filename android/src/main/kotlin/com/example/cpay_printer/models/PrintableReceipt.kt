@@ -46,29 +46,8 @@ val dailyTokenNumber: String?,
     val customerName: String,
     @SerializedName("customer_note")
     val customerNote: String?,
-    @SerializedName("platform_charge")
-    val platformCharge: Double = 0.0,
     ) {
 
-
-
-    // EXTRA charge total
-    private val extraChargeAmount: Double
-        get() = otherCharges
-            .filter {
-                it.name.equals("EXTRA", ignoreCase = true)
-            }
-            .sumOf { it.value }
-
-    // Other charges excluding EXTRA
-    private val filteredOtherCharges: List<OtherCharge>
-        get() = otherCharges.filterNot {
-            it.name.equals("EXTRA", ignoreCase = true)
-        }
-
-    // Final printable total
-    private val finalTotal: Double
-        get() = orderTotal - platformCharge - extraChargeAmount
 
 
          // Helper to wrap long item names
@@ -214,10 +193,21 @@ if (tableNumber != null && tableNumber > 0) {
         }
 
 
-        for (charge in filteredOtherCharges) {
-            list.add(DataForSendToPrinterPos58.selectAlignment(2))
-            list.add("${charge.name} ${charge.value}\n".encodeToByteArray())
-        }
+val filteredCharges = otherCharges.filter {
+    !it.name.equals("EXTRA", ignoreCase = true)
+}
+
+val extraTotal = otherCharges
+    .filter { it.name.equals("EXTRA", ignoreCase = true) }
+    .sumOf { it.value }
+
+val finalTotal = orderTotal - extraTotal
+
+
+for (charge in filteredCharges) {
+    list.add(DataForSendToPrinterPos58.selectAlignment(2))
+    list.add("${charge.name} ${charge.value}\n".encodeToByteArray())
+}
 
         list.add("--------------------------------".encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
@@ -411,11 +401,22 @@ list.add(byteArrayOf(0x1B, 0x45, 0x00))
     // -----------------------------
     // Other Charges
     // -----------------------------
-    for (charge in filteredOtherCharges) {
-        list.add(DataForSendToPrinterPos80.selectAlignment(2))
-        list.add("${charge.name} ${charge.value}\n".encodeToByteArray())
-         list.add("------------------------------------------------".encodeToByteArray())
-    }
+val filteredCharges = otherCharges.filter {
+    !it.name.equals("EXTRA", ignoreCase = true)
+}
+
+val extraTotal = otherCharges
+    .filter { it.name.equals("EXTRA", ignoreCase = true) }
+    .sumOf { it.value }
+
+val finalTotal = orderTotal - extraTotal
+
+
+for (charge in filteredCharges) {
+    list.add(DataForSendToPrinterPos80.selectAlignment(2))
+    list.add("${charge.name} ${charge.value}\n".encodeToByteArray())
+    list.add("------------------------------------------------".encodeToByteArray())
+}
 
 
     list.add(DataForSendToPrinterPos80.printAndFeedLine())
