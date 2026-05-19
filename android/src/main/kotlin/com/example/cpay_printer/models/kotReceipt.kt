@@ -435,19 +435,40 @@ fun leftMargin(dots: Int): ByteArray {
 // Combine Main + All KOTs
 // =========================
 data class KotPrintableReceiptV2(
+
+    val orderId: String = "",
+    val datetime: String = "",
+    val businessName: String = "",
+    val customerNote: String? = null,
+
     val main: PrintableReceiptMain = PrintableReceiptMain(),
+
     val kotSections: Map<String, List<CartItemReceipt>> = emptyMap()
 ) {
-    fun generateMainReceipt58() = main.generateMainReceipt58()
-    fun generateMainReceipt80() = main.generateMainReceipt80()
+
+    fun generateMainReceipt58(): MutableList<ByteArray>? {
+        if (main.items.isEmpty()) {
+            return null
+        }
+
+        return main.generateMainReceipt58()
+    }
+
+    fun generateMainReceipt80(): MutableList<ByteArray>? {
+        if (main.items.isEmpty()) {
+            return null
+        }
+
+        return main.generateMainReceipt80()
+    }
 
     fun generateAllKOTs58(): List<MutableList<ByteArray>> =
         kotSections.map { (cat, items) ->
             KOTPrintableReceipt(
-                orderId = main.orderId,
-                datetime = main.datetime,
-                businessName = main.businessName,
-                customerNote = main.customerNote,
+                orderId = orderId,
+                datetime = datetime,
+                businessName = businessName,
+                customerNote = customerNote,
                 categoryName = cat,
                 items = items,
             ).generateKOT58()
@@ -456,10 +477,10 @@ data class KotPrintableReceiptV2(
     fun generateAllKOTs80(): List<MutableList<ByteArray>> =
         kotSections.map { (cat, items) ->
             KOTPrintableReceipt(
-                orderId = main.orderId,
-                datetime = main.datetime,
-                businessName = main.businessName,
-                customerNote = main.customerNote,
+                orderId = orderId,
+                datetime = datetime,
+                businessName = businessName,
+                customerNote = customerNote,
                 categoryName = cat,
                 items = items,
             ).generateKOT80()

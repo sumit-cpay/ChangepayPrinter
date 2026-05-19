@@ -297,9 +297,13 @@ private fun printReceiptV2WithBluetoothPrinter(call: MethodCall, result: Result)
         }
 
         val kotReceipt = KotPrintableReceiptV2(
-            main = mainReceipt,
-            kotSections = safeKotSections
-        )
+    orderId = mainReceipt.orderId,
+    datetime = mainReceipt.datetime,
+    businessName = mainReceipt.businessName,
+    customerNote = mainReceipt.customerNote,
+    main = mainReceipt,
+    kotSections = safeKotSections
+)
 
         bluetoothPrintBinder?.WriteSendData(object : TaskCallback {
             override fun OnSucceed() {
@@ -313,19 +317,26 @@ private fun printReceiptV2WithBluetoothPrinter(call: MethodCall, result: Result)
 
             val list = mutableListOf<ByteArray>()
 
-            if (paperWidth == 80.0) {
-                list.addAll(kotReceipt.generateMainReceipt80())
-            } else {
-                list.addAll(kotReceipt.generateMainReceipt58())
-            }
+          // ---------- MAIN RECEIPT ----------
+val mainReceiptBytes =
+    if (paperWidth == 80.0) {
+        kotReceipt.generateMainReceipt80()
+    } else {
+        kotReceipt.generateMainReceipt58()
+    }
+
+// Print ONLY if main receipt exists and has content
+if (!mainReceiptBytes.isNullOrEmpty()) {
+    list.addAll(mainReceiptBytes)
+}
 
             for ((category, items) in kotReceipt.kotSections) {
 
                 val kot = KOTPrintableReceipt(
-                    orderId = kotReceipt.main.orderId,
-                    datetime = kotReceipt.main.datetime,
-                    businessName = kotReceipt.main.businessName,
-                    customerNote = kotReceipt.main.customerNote,
+                    orderId = kotReceipt.orderId,
+datetime = kotReceipt.datetime,
+businessName = kotReceipt.businessName,
+customerNote = kotReceipt.customerNote,
                     items = items,
                     categoryName = category
                 )
