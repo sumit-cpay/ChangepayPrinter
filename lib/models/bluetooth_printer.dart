@@ -80,19 +80,21 @@ class BluetoothPrinter {
   required bool kotEnabled,
 }) async {
   try {
-    // --- 1. Convert main receipt ---
+    final orderIdLabel = kotReceiptV2.orderIdLabel;
+    log('KOT print orderIdLabel: $orderIdLabel');
+    log('KOT sections: ${kotReceiptV2.kotSections.length}');
+
+    // --- 1. Convert main receipt (may be empty when main receipt is disabled) ---
     final Map<String, dynamic> mainMap = {
-      // 'daily_token_number': kotReceiptV2.main.dailyTokenNumber,
-  'orderId':
-      '${kotReceiptV2.main.orderId} - ${kotReceiptV2.main.dailyTokenNumber}',
-            'datetime': kotReceiptV2.main.datetime,
+      'orderId': orderIdLabel,
+            'datetime': kotReceiptV2.effectiveFormattedDatetime,
               'table_number': kotReceiptV2.main.tableNumber,
-      'businessName': kotReceiptV2.main.businessName,
+      'businessName': kotReceiptV2.effectiveBusinessName,
       'customerPhone': kotReceiptV2.main.customerPhone,
       'customerName': kotReceiptV2.main.customerName,
       'deliveryType': kotReceiptV2.main.deliveryType,
       'address': kotReceiptV2.main.address, 
-      'customerNote': kotReceiptV2.main.customerNote,
+      'customerNote': kotReceiptV2.effectiveCustomerNote,
       'items': kotReceiptV2.main.items.map((item) {
         return {
           'name': item.name,
@@ -137,10 +139,14 @@ class BluetoothPrinter {
       }).toList();
     });
 
-    // --- 3. Build payload for Kotlin ---
+    // --- 3. Build payload for Kotlin (top-level fields used for KOT when main is empty) ---
     final payload = {
+      'orderId': orderIdLabel,
+      'datetime': kotReceiptV2.effectiveFormattedDatetime,
+      'businessName': kotReceiptV2.effectiveBusinessName,
+      'customerNote': kotReceiptV2.effectiveCustomerNote,
       'main': mainMap,
-      'kotSections': kotSectionsMap, // <-- Important: nest all KOTs under this key
+      'kotSections': kotSectionsMap,
     };
 
     // --- 4. Send to Kotlin ---

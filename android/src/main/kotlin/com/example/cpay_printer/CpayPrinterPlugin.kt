@@ -278,11 +278,42 @@ private fun printReceiptV2WithBluetoothPrinter(call: MethodCall, result: Result)
     try {
         val gson = Gson()
 
+        fun stringFromMap(map: Map<String, Any>, vararg keys: String): String {
+            for (key in keys) {
+                val v = map[key] ?: continue
+                val s = when (v) {
+                    is String -> v.trim()
+                    else -> v.toString().trim()
+                }
+                if (s.isNotEmpty()) return s
+            }
+            return ""
+        }
+
         val mainMap = kotReceiptMap["main"]
-        val mainReceipt = gson.fromJson(
-            gson.toJson(mainMap),
-            PrintableReceiptMain::class.java
+        val mainReceipt = if (mainMap != null) {
+            gson.fromJson(
+                gson.toJson(mainMap),
+                PrintableReceiptMain::class.java
+            )
+        } else {
+            PrintableReceiptMain()
+        }
+
+        // Order metadata at payload root (used for KOT when main receipt is disabled/empty)
+        val orderId = stringFromMap(kotReceiptMap, "orderId", "order_id")
+            .ifBlank { mainReceipt.orderId }
+        val datetime = com.example.cpay_printer.models.PrinterUtils.formatReceiptDateTime(
+            stringFromMap(kotReceiptMap, "datetime").ifBlank { mainReceipt.datetime }
         )
+        val businessName = stringFromMap(kotReceiptMap, "businessName", "business_name")
+            .ifBlank { mainReceipt.businessName }
+        val customerNoteTop = stringFromMap(kotReceiptMap, "customerNote", "customer_note")
+        val customerNote: String? = when {
+            customerNoteTop.isNotEmpty() -> customerNoteTop
+            !mainReceipt.customerNote.isNullOrBlank() -> mainReceipt.customerNote
+            else -> null
+        }
 
         val rawKotSections = kotReceiptMap["kotSections"] as? Map<*, *> ?: emptyMap<String, Any>()
         val safeKotSections = mutableMapOf<String, List<CartItemReceipt>>()
@@ -296,14 +327,16 @@ private fun printReceiptV2WithBluetoothPrinter(call: MethodCall, result: Result)
             safeKotSections[key.toString()] = items
         }
 
+        Log.d("CpayPrinter", "KOT orderId=$orderId sections=${safeKotSections.size}")
+
         val kotReceipt = KotPrintableReceiptV2(
-    orderId = mainReceipt.orderId,
-    datetime = mainReceipt.datetime,
-    businessName = mainReceipt.businessName,
-    customerNote = mainReceipt.customerNote,
-    main = mainReceipt,
-    kotSections = safeKotSections
-)
+            orderId = orderId,
+            datetime = datetime,
+            businessName = businessName,
+            customerNote = customerNote,
+            main = mainReceipt,
+            kotSections = safeKotSections
+        )
 
         bluetoothPrintBinder?.WriteSendData(object : TaskCallback {
             override fun OnSucceed() {

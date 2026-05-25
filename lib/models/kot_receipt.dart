@@ -3,15 +3,40 @@
 // ==================== Order Item ====================
 import 'package:cpay_printer/models/printable_receipt.dart';
 
+/// Formats ISO/raw timestamps for thermal receipts (matches customer receipt style).
+String formatKotReceiptDateTime(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return trimmed;
+  // Already formatted (e.g. 27/06/2022 03:06 PM)
+  if (RegExp(r'\d{1,2}/\d{1,2}/\d{2,4}').hasMatch(trimmed)) {
+    return trimmed;
+  }
+  try {
+    final dt = DateTime.parse(trimmed).toLocal();
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    final year = dt.year;
+    final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final amPm = dt.hour >= 12 ? 'PM' : 'AM';
+    return '$day/$month/$year ${hour12.toString().padLeft(2, '0')}:$minute $amPm';
+  } catch (_) {
+    return trimmed;
+  }
+}
+
 class PrintableOrderItem {
   final String name;
+  final String orderId;
+
   final int quantity;
   final double price;
   final double total;
   final String? category; // e.g., Juice, Chinese, Main Course
 final List<PrintableAddon>? addons;
-  PrintableOrderItem({
+  PrintableOrderItem({  
     required this.name,
+    required this.orderId,
     required this.quantity,
     required this.price,
     required this.total,
@@ -22,6 +47,7 @@ final List<PrintableAddon>? addons;
   factory PrintableOrderItem.fromJson(Map<String, dynamic> json) {
     return PrintableOrderItem(
       name: json['name'] ?? '-',
+      orderId: json['order_id'] ?? '',
       quantity: (json['quantity'] ?? 0) as int,
       price: (json['price'] ?? 0).toDouble(),
       total: (json['total'] ?? 0).toDouble(),
@@ -36,6 +62,7 @@ final List<PrintableAddon>? addons;
 
   Map<String, dynamic> toJson() => {
         'name': name,
+        'order_id': orderId,
         'quantity': quantity,
         'price': price,
         'total': total,
@@ -125,46 +152,187 @@ class PrintableReceiptMain {
 
 // ==================== Receipt V2 (Main + KOT sections) ====================
 class KotPrintableReceiptV2 {
+  /// Top-level metadata used for KOT printing when [main] is empty/disabled.
+  final String orderId;
+  final String dailyTokenNumber;
+  final String datetime;
+  final String businessName;
+  final String? customerNote;
+
   final PrintableReceiptMain main;
   final Map<String, List<PrintableOrderItem>> kotSections;
+
+  static const Set<String> _reservedKeys = {
+    'main',
+    'kotSections',
+    'order_id',
+    'orderId',
+    'order_short_number',
+    'order_short_id',
+    'daily_token_number',
+    'dailyTokenNumber',
+    'datetime',
+    'business_name',
+    'businessName',
+    'customer_note',
+    'customerNote',
+  };
 
   KotPrintableReceiptV2({
     required this.main,
     required this.kotSections,
+    this.orderId = '',
+    this.dailyTokenNumber = '',
+    this.datetime = '',
+    this.businessName = '',
+    this.customerNote,
   });
 
-  factory KotPrintableReceiptV2.fromJson(Map<String, dynamic> json) {
-    final main = PrintableReceiptMain.fromJson(json['main'] ?? {});
-    final kotMap = <String, List<PrintableOrderItem>>{};
-    json.forEach((key, value) {
-      if (key == 'main') return;
-      kotMap[key] = (value as List? ?? [])
-          .map((e) => PrintableOrderItem.fromJson(e))
-          .toList();
-    });
-    return KotPrintableReceiptV2(main: main, kotSections: kotMap);
+  /// Same format as customer [PrintableReceipt]: shortOrderId-dailyTokenNumber.
+  String get orderIdLabel {
+    final id = effectiveOrderId;
+    final token = effectiveDailyTokenNumber;
+    if (id.isEmpty) return token;
+    if (token.isEmpty) return id;
+    return '$id-$token';
   }
 
-Map<String, dynamic> toJson() {
-  final map = <String, dynamic>{};
-  map['main'] = main.toJson();
+  String get effectiveOrderId =>
+      orderId.isNotEmpty ? orderId : main.orderId;
 
-  // Convert each KOT section to match Kotlin CartItemReceipt
-  kotSections.forEach((key, value) {
-    map[key] = value
-        .map((item) => {
-              "name": item.name,
-              "quantity": item.quantity,
-              "price": item.price,
-              "total": item.total,
-              "category": item.category,
-            })
-        .toList();
-  });
+  String get effectiveDailyTokenNumber =>
+      dailyTokenNumber.isNotEmpty ? dailyTokenNumber : main.dailyTokenNumber;
 
-  return map;
-}
+  String get effectiveDatetime =>
+      datetime.isNotEmpty ? datetime : main.datetime;
 
+  /// Formatted time string for KOT header (customer receipt uses [PrintableReceipt.dateTime] as-is).
+  String get effectiveFormattedDatetime =>
+      formatKotReceiptDateTime(effectiveDatetime);
+
+  String get effectiveBusinessName =>
+      businessName.isNotEmpty ? businessName : main.businessName;
+
+  String? get effectiveCustomerNote =>
+      customerNote ?? main.customerNote;
+
+  factory KotPrintableReceiptV2.fromJson(Map<String, dynamic> json) {
+    final mainJson = json['main'];
+    final main = mainJson != null && mainJson is Map
+        ? PrintableReceiptMain.fromJson(
+            Map<String, dynamic>.from(mainJson as Map),
+          )
+        : PrintableReceiptMain.fromJson({});
+
+    final kotMap = <String, List<PrintableOrderItem>>{};
+
+    void parseKotSectionEntries(Map<String, dynamic> sections) {
+      sections.forEach((key, value) {
+        if (_reservedKeys.contains(key)) return;
+        if (value is! List) return;
+        kotMap[key] = value
+            .map((e) => PrintableOrderItem.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ))
+            .toList();
+      });
+    }
+
+    final nestedKot = json['kotSections'];
+    if (nestedKot is Map) {
+      parseKotSectionEntries(Map<String, dynamic>.from(nestedKot));
+    }
+
+    json.forEach((key, value) {
+      if (_reservedKeys.contains(key) || key == 'kotSections') return;
+      if (value is! List) return;
+      kotMap[key] = value
+          .map((e) => PrintableOrderItem.fromJson(
+                Map<String, dynamic>.from(e as Map),
+              ))
+          .toList();
+    });
+
+    return KotPrintableReceiptV2(
+      main: main,
+      kotSections: kotMap,
+      orderId: json['order_short_number']?.toString() ??
+          json['order_short_id']?.toString() ??
+          json['order_id']?.toString() ??
+          json['orderId']?.toString() ??
+          '',
+      dailyTokenNumber: json['daily_token_number']?.toString() ??
+          json['dailyTokenNumber']?.toString() ??
+          '',
+      datetime: json['datetime']?.toString() ?? '',
+      businessName: json['business_name']?.toString() ??
+          json['businessName']?.toString() ??
+          '',
+      customerNote: json['customer_note']?.toString() ??
+          json['customerNote']?.toString(),
+    );
+  }
+
+  /// Fills top-level KOT fields from order details when API main receipt is null.
+  KotPrintableReceiptV2 withOrderContext({
+    required String orderShortNumber,
+    required String dailyTokenNumber,
+    String? businessName,
+    String? customerNote,
+    String? datetime,
+    String? printableReceiptDateTime,
+  }) {
+    final resolvedDatetime = this.datetime.isNotEmpty
+        ? this.datetime
+        : (printableReceiptDateTime?.trim().isNotEmpty == true
+            ? printableReceiptDateTime!.trim()
+            : formatKotReceiptDateTime(datetime ?? ''));
+
+    return KotPrintableReceiptV2(
+      main: main,
+      kotSections: kotSections,
+      orderId: orderId.isNotEmpty ? orderId : orderShortNumber,
+      dailyTokenNumber: this.dailyTokenNumber.isNotEmpty
+          ? this.dailyTokenNumber
+          : dailyTokenNumber,
+      datetime: resolvedDatetime,
+      businessName: this.businessName.isNotEmpty
+          ? this.businessName
+          : (businessName ?? ''),
+      customerNote: this.customerNote ?? customerNote,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{
+      'orderId': orderIdLabel,
+      'order_id': effectiveOrderId,
+      'daily_token_number': effectiveDailyTokenNumber,
+      'datetime': effectiveFormattedDatetime,
+      'businessName': effectiveBusinessName,
+      'customerNote': effectiveCustomerNote,
+      'main': main.toJson(),
+      'kotSections': <String, dynamic>{},
+    };
+
+    kotSections.forEach((key, value) {
+      (map['kotSections'] as Map<String, dynamic>)[key] = value
+          .map((item) => {
+                'name': item.name,
+                'quantity': item.quantity,
+                'price': item.price,
+                'total': item.total,
+                'category': item.category,
+                if (item.addons != null)
+                  'addons': item.addons!
+                      .map((a) => {'name': a.name, 'price': a.price})
+                      .toList(),
+              })
+          .toList();
+    });
+
+    return map;
+  }
 }
 
 // ==================== Extension for Paisa to Rupee Conversion ====================

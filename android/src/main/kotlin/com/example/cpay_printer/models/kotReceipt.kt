@@ -11,6 +11,34 @@ import kotlin.math.min
 object PrinterUtils {
     fun boldOn(): ByteArray = byteArrayOf(0x1B, 0x45, 0x01)
     fun boldOff(): ByteArray = byteArrayOf(0x1B, 0x45, 0x00)
+
+    /** Matches customer receipt datetime style (dd/MM/yyyy hh:mm a). */
+    fun formatReceiptDateTime(raw: String): String {
+        val trimmed = raw.trim()
+        if (trimmed.isEmpty()) return trimmed
+        if (Regex("""\d{1,2}/\d{1,2}/\d{2,4}""").containsMatchIn(trimmed)) return trimmed
+
+        val patterns = arrayOf(
+            "yyyy-MM-dd'T'HH:mm:ss.SSSX",
+            "yyyy-MM-dd'T'HH:mm:ssX",
+            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd HH:mm:ss",
+        )
+        for (pattern in patterns) {
+            try {
+                val parser = java.text.SimpleDateFormat(pattern, Locale.US)
+                parser.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                val date = parser.parse(trimmed) ?: continue
+                val out = java.text.SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale.US)
+                out.timeZone = java.util.TimeZone.getDefault()
+                return out.format(date)
+            } catch (_: Exception) {
+            }
+        }
+        return trimmed
+    }
 }
 
 
