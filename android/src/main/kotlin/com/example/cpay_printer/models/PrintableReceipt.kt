@@ -39,6 +39,8 @@ class PrintableReceipt(
     val customerName: String,
     @SerializedName("customer_note")
     val customerNote: String?,
+        @SerializedName("payment_status")
+    val paymentStatus: String? = null,
     ) {
 
     public fun generatePrintableByteArrayForPaperWidth58(qrCodeText: String? = null): MutableList<ByteArray> {
@@ -48,6 +50,15 @@ class PrintableReceipt(
         list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
         list.add(orderId.encodeToByteArray())
         list.add(DataForSendToPrinterPos58.printAndFeedLine())
+PrinterUtils.formatPaymentStatusLabel(paymentStatus)?.let { label ->
+    list.add(DataForSendToPrinterPos58.selectAlignment(1))
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
+    list.add(byteArrayOf(0x1B, 0x45, 0x01))
+    list.add("Payment: $label\n".encodeToByteArray())
+    list.add(byteArrayOf(0x1B, 0x45, 0x00))
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
+    list.add(DataForSendToPrinterPos58.printAndFeedLine())
+}
 
         list.add(DataForSendToPrinterPos58.selectCharacterSize(16))
         list.add(datetime.encodeToByteArray())
@@ -84,6 +95,17 @@ class PrintableReceipt(
 
         list.add(DataForSendToPrinterPos58.initializePrinter())
 
+
+
+PrinterUtils.formatPaymentStatusLabel(paymentStatus)?.let { label ->
+    list.add(DataForSendToPrinterPos58.selectAlignment(1))
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
+    list.add(byteArrayOf(0x1B, 0x45, 0x01))
+    list.add("Payment: $label\n".encodeToByteArray())
+    list.add(byteArrayOf(0x1B, 0x45, 0x00))
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
+    list.add(DataForSendToPrinterPos58.printAndFeedLine())
+}
         for (item in items) {
             list.add(addOrderItemToPrintableString(item).encodeToByteArray())
         }
@@ -140,6 +162,15 @@ class PrintableReceipt(
         list.add(DataForSendToPrinterPos80.selectCharacterSize(18))
         list.add(orderId.encodeToByteArray())
         list.add(DataForSendToPrinterPos80.printAndFeedLine())
+PrinterUtils.formatPaymentStatusLabel(paymentStatus)?.let { label ->
+    list.add(DataForSendToPrinterPos80.selectAlignment(1))
+    list.add(DataForSendToPrinterPos80.selectCharacterSize(18))
+    list.add(byteArrayOf(0x1B, 0x45, 0x01))
+    list.add("Payment: $label\n".encodeToByteArray())
+    list.add(byteArrayOf(0x1B, 0x45, 0x00))
+    list.add(DataForSendToPrinterPos80.selectCharacterSize(0))
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+}
 
         list.add(DataForSendToPrinterPos80.selectCharacterSize(16))
         list.add(datetime.encodeToByteArray())

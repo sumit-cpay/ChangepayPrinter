@@ -58,7 +58,23 @@ class PrintableOrderItems {
   }
 }
 
+
+String? parsePaymentStatusFromJson(Map<String, dynamic> json) {
+  final raw = json['payment_status'] ?? json['paymentStatus'];
+  if (raw != null && raw.toString().trim().isNotEmpty) {
+    return raw.toString().trim();
+  }
+  final isPaid = json['is_paid'] ?? json['isPaid'];
+  if (isPaid is bool) {
+    return isPaid ? 'PAID' : 'NOT PAID';
+  }
+  return null;
+}
+
 class PrintableReceipt {
+  final String? paymentStatus;
+  final String? tableNumber;
+  final String dailyTokenNumber;
   final String dateTime;
   final String address;
   final String deliveryType;
@@ -75,6 +91,9 @@ class PrintableReceipt {
   final String encrQrString;
   final String? customerNote;
   PrintableReceipt({
+     this.tableNumber,
+    required this.dailyTokenNumber,
+     this.paymentStatus,
     required this.dateTime,
     required this.customerPhone,
     required this.address,
@@ -93,6 +112,8 @@ class PrintableReceipt {
   });
   factory PrintableReceipt.fromJson(Map<String, dynamic> json) {
     return PrintableReceipt(
+      dailyTokenNumber: json['daily_token_number'] ?? '-',  
+       paymentStatus: parsePaymentStatusFromJson(json),
       orderLongId: json['order_long_id'] ?? '',
       dateTime: json['datetime'] ?? '-',
       address: json['address'] ?? '-',
@@ -118,6 +139,30 @@ class PrintableReceipt {
       customerNote: json['customer_note'],
     );
   }
+   PrintableReceipt copyWith({
+    String? paymentStatus,
+  }) {
+    return PrintableReceipt(
+      tableNumber: tableNumber,
+      dailyTokenNumber: dailyTokenNumber,
+      dateTime: dateTime,
+      customerPhone: customerPhone,
+      address: address,
+      deliveryType: deliveryType,
+      items: items,
+      otherCharges: otherCharges,
+      discount: discount,
+      orderTotal: orderTotal,
+      printerId: printerId,
+      businessName: businessName,
+      orderId: orderId,
+      orderLongId: orderLongId,
+      encrQrString: encrQrString,
+      customerName: customerName,
+      customerNote: customerNote,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -135,6 +180,8 @@ class PrintableReceipt {
       'encr_qr_string': encrQrString,
       'customer_name': customerName,
       'customer_note': customerNote,
+            if (paymentStatus != null) 'payment_status': paymentStatus,
+
     };
   }
 }
