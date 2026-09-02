@@ -11,8 +11,19 @@ import net.posprinter.utils.DataForSendToPrinterPos58
 import net.posprinter.utils.DataForSendToPrinterPos80
 import java.lang.Integer.min
 import java.util.EnumMap
+import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.roundToInt
+
+private fun formatPaymentStatusLabel(raw: String?): String? {
+    val status = raw?.trim().orEmpty()
+    if (status.isEmpty()) return null
+    return when (status.uppercase(Locale.US)) {
+        "COD" -> "COD"
+        "PAID", "SUCCESS", "APPROVED" -> "PAID"
+        else -> status.uppercase(Locale.US)
+    }
+}
 
 
 
@@ -46,6 +57,8 @@ val dailyTokenNumber: String?,
     val customerName: String,
     @SerializedName("customer_note")
     val customerNote: String?,
+    @SerializedName("payment_status")
+    val paymentStatus: String? = null,
     ) {
 
 
@@ -84,6 +97,15 @@ val displayOrderNo =
 list.add(displayOrderNo.encodeToByteArray())
 list.add(DataForSendToPrinterPos58.printAndFeedLine())
 
+formatPaymentStatusLabel(paymentStatus)?.let { label ->
+    list.add(DataForSendToPrinterPos58.selectAlignment(1))
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(18))
+    list.add(byteArrayOf(0x1B, 0x45, 0x01))
+    list.add("Payment: $label\n".encodeToByteArray())
+    list.add(byteArrayOf(0x1B, 0x45, 0x00))
+    list.add(DataForSendToPrinterPos58.selectCharacterSize(0))
+    list.add(DataForSendToPrinterPos58.printAndFeedLine())
+}
 
 list.add(byteArrayOf(0x1B, 0x21, 0x00))
         list.add(datetime.encodeToByteArray())
@@ -257,6 +279,15 @@ val displayOrderNo =
 list.add(displayOrderNo.encodeToByteArray())
 list.add(DataForSendToPrinterPos80.printAndFeedLine())
 
+formatPaymentStatusLabel(paymentStatus)?.let { label ->
+    list.add(DataForSendToPrinterPos80.selectAlignment(1))
+    list.add(DataForSendToPrinterPos80.selectCharacterSize(18))
+    list.add(byteArrayOf(0x1B, 0x45, 0x01))
+    list.add("Payment: $label\n".encodeToByteArray())
+    list.add(byteArrayOf(0x1B, 0x45, 0x00))
+    list.add(DataForSendToPrinterPos80.selectCharacterSize(0))
+    list.add(DataForSendToPrinterPos80.printAndFeedLine())
+}
 
     list.add(DataForSendToPrinterPos80.selectCharacterSize(1))
     list.add(datetime.encodeToByteArray())
